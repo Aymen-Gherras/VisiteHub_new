@@ -17,20 +17,14 @@ services:
     container_name: VisiteHub-backend-new
     ports:
       - "4001:4000"
+    env_file:
+      - .env
     environment:
       - PORT=4000
       - DB_HOST=db
       - DB_PORT=3306
-      - DB_USERNAME=root
-      - DB_PASSWORD=root
-      - DB_DATABASE=exped360_db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      # Add other necessary env vars from vps.env.example if needed
-      - JWT_SECRET=dev_secret_key
-      - CLOUDINARY_CLOUD_NAME=test
-      - CLOUDINARY_API_KEY=test
-      - CLOUDINARY_API_SECRET=test
     depends_on:
       - db
       - redis
@@ -39,9 +33,8 @@ services:
   db:
     image: mysql:8.0
     container_name: VisiteHub-db-new
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: exped360_db
+    env_file:
+      - .env
     ports:
       - "3307:3306"
     volumes:
