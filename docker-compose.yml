@@ -1,7 +1,10 @@
 services:
   frontend:
     image: visitehub_new-frontend
-    build: ./visitehub.duckdns.org
+    build:
+      context: ./visitehub.duckdns.org
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:4001
     container_name: VisiteHub-frontend-new
     ports:
       - "3002:3000"
