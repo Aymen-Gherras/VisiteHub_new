@@ -11,32 +11,32 @@ pipeline {
     stages {
         stage('Prepare VPS') {
             steps {
-                sshagent(['vps-ssh-key']) {
-                    sh "ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} 'mkdir -p ${PROJECT_DIR}'"
+                withCredentials([sshUserPrivateKey(credentialsId: 'vps-ssh-key', keyFileVariable: 'SSH_KEY')]) {
+                    sh "ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} 'mkdir -p ${PROJECT_DIR}'"
                 }
             }
         }
 
         stage('Transfer Files') {
             steps {
-                sshagent(['vps-ssh-key']) {
+                withCredentials([sshUserPrivateKey(credentialsId: 'vps-ssh-key', keyFileVariable: 'SSH_KEY')]) {
                     // Transfer backend
-                    sh "scp -o StrictHostKeyChecking=no -r visiteapihub.duckdns.org ${VPS_USER}@${VPS_IP}:${PROJECT_DIR}/"
+                    sh "scp -i ${SSH_KEY} -o StrictHostKeyChecking=no -r visiteapihub.duckdns.org ${VPS_USER}@${VPS_IP}:${PROJECT_DIR}/"
                     
                     // Transfer frontend
-                    sh "scp -o StrictHostKeyChecking=no -r visitehub.duckdns.org ${VPS_USER}@${VPS_IP}:${PROJECT_DIR}/"
+                    sh "scp -i ${SSH_KEY} -o StrictHostKeyChecking=no -r visitehub.duckdns.org ${VPS_USER}@${VPS_IP}:${PROJECT_DIR}/"
                     
                     // Transfer docker-compose
-                    sh "scp -o StrictHostKeyChecking=no docker-compose.yml ${VPS_USER}@${VPS_IP}:${PROJECT_DIR}/"
+                    sh "scp -i ${SSH_KEY} -o StrictHostKeyChecking=no docker-compose.yml ${VPS_USER}@${VPS_IP}:${PROJECT_DIR}/"
                 }
             }
         }
 
         stage('Deploy') {
             steps {
-                sshagent(['vps-ssh-key']) {
+                withCredentials([sshUserPrivateKey(credentialsId: 'vps-ssh-key', keyFileVariable: 'SSH_KEY')]) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} '
+                        ssh -i ${SSH_KEY} -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} '
                             cd ${PROJECT_DIR}
                             
                             # Stop old containers if running (optional, based on new names)
