@@ -1,0 +1,34 @@
+services:
+  # Backend API Service
+  - type: web
+    name: exped360-backend
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 24h
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_NOTIFICATION_URL
+        sync: false
+    databaseName: exped360_db
+    databaseUser: exped360_user
+
+databases:
+  # PostgreSQL Database
+  - name: exped360-db
+    databaseName: exped360_db
+    user: exped360_user
+    plan: free

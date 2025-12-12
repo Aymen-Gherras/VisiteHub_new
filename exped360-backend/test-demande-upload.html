@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Demande Upload</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; }
+        button:hover { background: #0056b3; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .endpoint-buttons { margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>Test Demande Upload</h1>
+    
+    <form id="demandeForm">
+        <div class="form-group">
+            <label for="name">Name *</label>
+            <input type="text" id="name" name="name" value="Test User" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Email *</label>
+            <input type="email" id="email" name="email" value="test@example.com" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="phone">Phone</label>
+            <input type="tel" id="phone" name="phone" value="+213123456789">
+        </div>
+        
+        <div class="form-group">
+            <label for="propertyType">Property Type *</label>
+            <select id="propertyType" name="propertyType" required>
+                <option value="apartment">Apartment</option>
+                <option value="villa">Villa</option>
+                <option value="house">House</option>
+                <option value="land">Land</option>
+                <option value="commercial">Commercial</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="propertyLocation">Property Location *</label>
+            <input type="text" id="propertyLocation" name="propertyLocation" value="Alger" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="propertyIntention">Property Intention *</label>
+            <select id="propertyIntention" name="propertyIntention" required>
+                <option value="sell">Sell</option>
+                <option value="rent">Rent</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" rows="3">Test demande with images</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="whatsappContact">WhatsApp Contact</label>
+            <input type="checkbox" id="whatsappContact" name="whatsappContact" checked>
+        </div>
+        
+        <div class="form-group">
+            <label for="emailContact">Email Contact</label>
+            <input type="checkbox" id="emailContact" name="emailContact" checked>
+        </div>
+        
+        <div class="form-group">
+            <label for="images">Images (optional)</label>
+            <input type="file" id="images" name="images" multiple accept="image/*">
+        </div>
+        
+        <div class="endpoint-buttons">
+            <button type="button" onclick="submitForm('with-images')">Test /with-images endpoint</button>
+            <button type="button" onclick="submitForm('upload')">Test /upload endpoint</button>
+            <button type="button" onclick="submitForm('upload-files')">Test /upload-files endpoint</button>
+            <button type="button" onclick="submitForm('test-upload')">Test /test-upload endpoint</button>
+        </div>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        async function submitForm(endpoint) {
+            const formData = new FormData();
+            
+            // Add form fields
+            formData.append('name', document.getElementById('name').value);
+            formData.append('email', document.getElementById('email').value);
+            formData.append('phone', document.getElementById('phone').value);
+            formData.append('propertyType', document.getElementById('propertyType').value);
+            formData.append('propertyLocation', document.getElementById('propertyLocation').value);
+            formData.append('propertyIntention', document.getElementById('propertyIntention').value);
+            formData.append('message', document.getElementById('message').value);
+            formData.append('whatsappContact', document.getElementById('whatsappContact').checked);
+            formData.append('emailContact', document.getElementById('emailContact').checked);
+            
+            // Add files
+            const fileInput = document.getElementById('images');
+            if (fileInput.files.length > 0) {
+                for (let i = 0; i < fileInput.files.length; i++) {
+                    formData.append('images', fileInput.files[i]);
+                }
+            }
+            
+            try {
+                console.log('Submitting to endpoint:', endpoint);
+                console.log('FormData contents:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(key, ':', value);
+                }
+                
+                const response = await fetch(`http://localhost:3000/api/demandes/${endpoint}`, {
+                    method: 'POST',
+                    body: formData,
+                    // Don't set Content-Type - let browser set it for FormData
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                const result = await response.text();
+                console.log('Response body:', result);
+                
+                try {
+                    const jsonResult = JSON.parse(result);
+                    document.getElementById('result').innerHTML = `<pre>${JSON.stringify(jsonResult, null, 2)}</pre>`;
+                } catch (e) {
+                    document.getElementById('result').innerHTML = `<pre>${result}</pre>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = `<pre style="color: red;">Error: ${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html>

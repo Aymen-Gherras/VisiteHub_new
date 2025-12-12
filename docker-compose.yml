@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./visitehub.duckdns.org
+    container_name: VisiteHub-frontend-new
+    ports:
+      - "3002:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:4001
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  backend:
+    build: ./visiteapihub.duckdns.org
+    container_name: VisiteHub-backend-new
+    ports:
+      - "4001:4000"
+    environment:
+      - PORT=4000
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - DB_DATABASE=exped360_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      # Add other necessary env vars from vps.env.example if needed
+      - JWT_SECRET=dev_secret_key
+      - CLOUDINARY_CLOUD_NAME=test
+      - CLOUDINARY_API_KEY=test
+      - CLOUDINARY_API_SECRET=test
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    container_name: VisiteHub-db-new
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: exped360_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data_new:/var/lib/mysql
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: VisiteHub-redis-new
+    ports:
+      - "6380:6379"
+    restart: unless-stopped
+
+volumes:
+  db_data_new:

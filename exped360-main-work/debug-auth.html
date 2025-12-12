@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Auth & Upload</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px; margin: 5px; cursor: pointer; }
+        .result { margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 3px; }
+        .error { background: #ffe6e6; color: #cc0000; }
+        .success { background: #e6ffe6; color: #006600; }
+    </style>
+</head>
+<body>
+    <h1>Debug: Authentication & Upload</h1>
+    
+    <div class="section">
+        <h2>1. Check Auth Token</h2>
+        <button onclick="checkAuthToken()">Check Local Storage Auth</button>
+        <div id="authResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>2. Test Upload Endpoint</h2>
+        <input type="file" id="fileInput" accept="image/*">
+        <button onclick="testUpload()">Test Upload</button>
+        <div id="uploadResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>3. Test Property Creation</h2>
+        <button onclick="testPropertyCreation()">Test Property Creation</button>
+        <div id="propertyResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        
+        function checkAuthToken() {
+            const authToken = localStorage.getItem('auth_token');
+            const authUser = localStorage.getItem('auth_user');
+            
+            const result = document.getElementById('authResult');
+            
+            if (authToken) {
+                result.className = 'result success';
+                result.innerHTML = `
+                    <strong>Auth Token Found:</strong><br>
+                    Token: ${authToken.substring(0, 20)}...<br>
+                    User: ${authUser || 'No user data'}
+                `;
+            } else {
+                result.className = 'result error';
+                result.innerHTML = '<strong>No auth token found in localStorage</strong><br>You need to login first!';
+            }
+        }
+
+        async function testUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const result = document.getElementById('uploadResult');
+            
+            if (!fileInput.files[0]) {
+                result.className = 'result error';
+                result.innerHTML = 'Please select a file first';
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            try {
+                result.innerHTML = 'Uploading...';
+                
+                const response = await fetch(`${API_BASE}/upload/image`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('Upload response:', response);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        <strong>Upload Successful!</strong><br>
+                        Image URL: <a href="${data.imageUrl}" target="_blank">${data.imageUrl}</a>
+                    `;
+                } else {
+                    const errorText = await response.text();
+                    result.className = 'result error';
+                    result.innerHTML = `
+                        <strong>Upload Failed!</strong><br>
+                        Status: ${response.status}<br>
+                        Error: ${errorText}
+                    `;
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `<strong>Network Error:</strong> ${error.message}`;
+            }
+        }
+
+        async function testPropertyCreation() {
+            const result = document.getElementById('propertyResult');
+            
+            const authToken = localStorage.getItem('auth_token');
+            if (!authToken) {
+                result.className = 'result error';
+                result.innerHTML = 'No auth token found. Please login first.';
+                return;
+            }
+            
+            const testProperty = {
+                title: 'Debug Test Property',
+                description: 'This is a test property for debugging',
+                price: 100000,
+                type: 'apartment',
+                transactionType: 'vendre',
+                bedrooms: 2,
+                bathrooms: 1,
+                surface: 70,
+                wilaya: 'Alger',
+                city: 'Alger Centre',
+                address: '123 Test Street',
+                imageUrls: [] // No images for this test
+            };
+            
+            try {
+                result.innerHTML = 'Creating property...';
+                
+                const response = await fetch(`${API_BASE}/properties`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(testProperty)
+                });
+                
+                console.log('Property creation response:', response);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        <strong>Property Created!</strong><br>
+                        ID: ${data.id}<br>
+                        Title: ${data.title}
+                    `;
+                } else {
+                    const errorText = await response.text();
+                    result.className = 'result error';
+                    result.innerHTML = `
+                        <strong>Property Creation Failed!</strong><br>
+                        Status: ${response.status}<br>
+                        Error: ${errorText}
+                    `;
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `<strong>Network Error:</strong> ${error.message}`;
+            }
+        }
+
+        // Auto-check auth on load
+        window.onload = function() {
+            checkAuthToken();
+        };
+    </script>
+</body>
+</html>

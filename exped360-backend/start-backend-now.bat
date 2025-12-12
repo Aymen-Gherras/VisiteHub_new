@@ -1,0 +1,6 @@
+@echo off
+echo Starting Backend Server...
+cd /d "%~dp0"
+echo Current directory: %CD%
+echo Starting server on port 3002...
+node working-backend.js

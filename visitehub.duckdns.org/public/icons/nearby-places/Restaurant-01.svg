@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 64 64">
+  <!-- Generator: Adobe Illustrator 29.2.1, SVG Export Plug-In . SVG Version: 2.1.0 Build 116)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: none;
+        stroke: #57bf93;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2px;
+      }
+    </style>
+  </defs>
+  <path class="st0" d="M11,34.1h0c-2.9,0-5.2-2.3-5.2-5.2v-2.4h10.5v2.4c0,2.8-2.4,5.2-5.3,5.2Z"/>
+  <path class="st0" d="M21.5,34.1h0c-2.9,0-5.2-2.3-5.2-5.2v-2.4h10.5v2.4c0,2.8-2.4,5.2-5.3,5.2Z"/>
+  <path class="st0" d="M32,34.1h0c-2.9,0-5.2-2.3-5.2-5.2v-2.4h10.5v2.4c0,2.8-2.4,5.2-5.3,5.2Z"/>
+  <path class="st0" d="M42.5,34.1h0c-2.9,0-5.2-2.3-5.2-5.2v-2.4h10.5v2.4c0,2.8-2.4,5.2-5.3,5.2Z"/>
+  <path class="st0" d="M53,34.1h0c-2.9,0-5.2-2.3-5.2-5.2v-2.4h10.5v2.4c0,2.8-2.4,5.2-5.3,5.2Z"/>
+  <line class="st0" x1="16.3" y1="29.3" x2="16.2" y2="29.3"/>
+  <line class="st0" x1="37.3" y1="29.3" x2="37.2" y2="29.3"/>
+  <polyline class="st0" points="53 34.1 53 61.3 11 61.3 11 34.1"/>
+  <line class="st0" x1="47.8" y1="29.3" x2="47.7" y2="29.3"/>
+  <line class="st0" x1="26.8" y1="29.3" x2="26.7" y2="29.3"/>
+  <path class="st0" d="M41.3,14.8h9c1.7,0,3.3,1,4,2.6l4,9"/>
+  <path class="st0" d="M5.8,26.4l4-9c.7-1.6,2.2-2.6,4-2.6h8.8"/>
+  <line class="st0" x1="16.3" y1="26.4" x2="20.1" y2="14.8"/>
+  <line class="st0" x1="47.7" y1="26.4" x2="43.9" y2="14.8"/>
+  <line class="st0" x1="27.4" y1="21" x2="26.8" y2="26.4"/>
+  <line class="st0" x1="37.2" y1="26.4" x2="36.5" y2="20.9"/>
+  <rect class="st0" x="16.9" y="40.9" width="10.6" height="20.4"/>
+  <line class="st0" x1="20.1" y1="47.4" x2="20.1" y2="49.4"/>
+  <line class="st0" x1="34.9" y1="46.9" x2="34.9" y2="56.1"/>
+  <ellipse class="st0" cx="34.9" cy="43.1" rx="2.9" ry="3.8"/>
+  <path class="st0" d="M47.8,39.3v5.7c0,1-.8,1.9-1.9,1.9h-2.1c-1,0-1.9-.8-1.9-1.9v-5.7"/>
+  <line class="st0" x1="44.9" y1="39.3" x2="44.9" y2="56.1"/>
+  <circle class="st0" cx="31.9" cy="12.4" r="9.7"/>
+  <path class="st0" d="M27.5,14.4c0-2.6,1.9-4.8,4.4-4.8s4.4,2.1,4.4,4.8h-8.8Z"/>
+  <line class="st0" x1="25.7" y1="14.4" x2="38.3" y2="14.4"/>
+  <line class="st0" x1="31.9" y1="9.7" x2="31.9" y2="7.6"/>
+</svg>
