@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-require("./app/_lib/persecutive.cjs");
 
 const nextConfig: NextConfig = {
   output: "standalone",
