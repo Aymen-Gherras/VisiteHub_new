@@ -1,7 +1,6 @@
-version: '3.8'
-
 services:
   frontend:
+    image: visitehub_new-frontend
     build: ./visitehub.duckdns.org
     container_name: VisiteHub-frontend-new
     ports:
@@ -13,6 +12,7 @@ services:
     restart: unless-stopped
 
   backend:
+    image: visitehub_new-backend
     build: ./visiteapihub.duckdns.org
     container_name: VisiteHub-backend-new
     ports:
