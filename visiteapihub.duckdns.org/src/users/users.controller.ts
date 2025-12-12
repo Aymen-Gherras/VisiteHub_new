@@ -31,8 +31,9 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all users with pagination' })
   @ApiResponse({ status: 200, description: 'Return paginated users' })
-  findAll(@Query('limit') limit?: number, @Query('offset') offset?: number) {
-    return this.usersService.findAll(limit || 50, offset || 0);
+  async findAll(@Query('limit') limit?: number, @Query('offset') offset?: number) {
+    const result = await this.usersService.findAll(limit || 50, offset || 0);
+    return result.users;
   }
 
   @Get(':id')
