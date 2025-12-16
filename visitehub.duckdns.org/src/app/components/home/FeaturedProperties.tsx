@@ -41,9 +41,9 @@ export const FeaturedProperties: React.FC = () => {
                   </Badge>
                 </div>
                 
-                {/* 360° Tour Indicator */}
+                {/* 360° Tour Indicator - iOS compatible */}
                 {property.has360Tour && (
-                  <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm text-gray-800 px-3 py-1 rounded-full text-sm">
+                  <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm text-gray-800 px-3 py-1 rounded-full text-sm z-10 pointer-events-none">
                     <i className="fas fa-expand mr-1"></i>
                     Visite virtuelle
                   </div>

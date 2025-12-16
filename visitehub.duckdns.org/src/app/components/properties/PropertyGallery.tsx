@@ -81,8 +81,8 @@ export const PropertyGallery: React.FC<PropertyGalleryProps> = ({
             <span className="text-gray-400">No image available</span>
           </div>
         )}
-        {/* Zoom indicator */}
-        <div className="absolute top-4 right-4 bg-black/50 text-white px-2 py-1 rounded text-sm">
+        {/* Zoom indicator - iOS compatible */}
+        <div className="absolute top-4 right-4 bg-black/50 text-white px-2 py-1 rounded text-sm z-10 pointer-events-none touch-action-none">
           <i className="fas fa-search-plus mr-1"></i>
           Zoom
         </div>
