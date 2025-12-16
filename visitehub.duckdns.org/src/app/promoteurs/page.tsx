@@ -8,6 +8,7 @@ import { apiService } from '../../api';
 interface Promoteur {
   id: string;
   name: string;
+  slug: string;
   wilaya: string;
   daira?: string;
   description?: string;
@@ -17,11 +18,23 @@ interface Promoteur {
   bgColor: string;
 }
 
-// Mock data - replace with API call once backend is ready
+// Helper function to generate slug from name
+const generateSlug = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .trim()
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-'); // Replace multiple hyphens with single hyphen
+};
+
+// Mock data - This will be replaced with API call from admin panel
+// TODO: Connect to backend API endpoint: GET /api/promoteurs
 const mockPromoteurs: Promoteur[] = [
   {
     id: '1',
     name: 'Bessa Promotion',
+    slug: 'bessa-promotion',
     wilaya: '16 - Alger',
     daira: 'Alger',
     description: 'Leader de la promotion immobilière, nous construisons l\'avenir avec des résidences haut...',
@@ -32,6 +45,7 @@ const mockPromoteurs: Promoteur[] = [
   {
     id: '2',
     name: 'Hasnaoui Immobilier',
+    slug: 'hasnaoui-immobilier',
     wilaya: '31 - Oran',
     daira: 'Oran',
     description: 'Une expertise reconnue dans la construction de cités intégrées et d\'espaces durables...',
@@ -42,6 +56,7 @@ const mockPromoteurs: Promoteur[] = [
   {
     id: '3',
     name: 'Goumid Promotion',
+    slug: 'goumid-promotion',
     wilaya: '25 - Constantine',
     daira: 'Constantine',
     description: 'Votre partenaire de confiance pour des logements de qualité supérieure au cœur de la ville...',
@@ -378,7 +393,7 @@ export default function PromoteursPage() {
             {filteredPromoteurs.map((promoteur) => (
               <Link
                 key={promoteur.id}
-                href={`/promoteurs/${promoteur.id}`}
+                href={`/promoteurs/${promoteur.slug}`}
                 className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden group"
               >
                 {/* Cover Image with Initials */}

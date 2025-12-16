@@ -5,9 +5,20 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { apiService } from '../../api';
 
+// Helper function to generate URL-friendly slugs
+const generateSlug = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+};
+
 interface Agence {
   id: string;
   name: string;
+  slug: string;
   wilaya: string;
   daira?: string;
   description?: string;
@@ -18,10 +29,12 @@ interface Agence {
 }
 
 // Mock data - replace with API call once backend is ready
+// TODO: Connect to backend API endpoint: GET /api/agences
 const mockAgences: Agence[] = [
   {
     id: '1',
     name: 'Immobilier Excellence',
+    slug: 'immobilier-excellence',
     wilaya: '16 - Alger',
     daira: 'Alger Centre',
     description: 'Votre agence de confiance pour trouver le bien immobilier qui vous correspond...',
@@ -32,6 +45,7 @@ const mockAgences: Agence[] = [
   {
     id: '2',
     name: 'Agence du Patrimoine',
+    slug: 'agence-du-patrimoine',
     wilaya: '31 - Oran',
     daira: 'Oran',
     description: 'Spécialistes de l\'immobilier haut de gamme et des résidences de luxe...',
@@ -42,6 +56,7 @@ const mockAgences: Agence[] = [
   {
     id: '3',
     name: 'Immobilière Constantine',
+    slug: 'immobiliere-constantine',
     wilaya: '25 - Constantine',
     daira: 'Constantine',
     description: 'Des professionnels à votre écoute pour tous vos projets immobiliers...',
@@ -378,7 +393,7 @@ export default function AgencesPage() {
             {filteredAgences.map((agence) => (
               <Link
                 key={agence.id}
-                href={`/agences/${agence.id}`}
+                href={`/agences/${agence.slug}`}
                 className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden group"
               >
                 {/* Cover Image with Initials */}
