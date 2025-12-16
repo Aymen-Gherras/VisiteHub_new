@@ -44,8 +44,8 @@ export class LocationsController {
   listWilayas(): string[] {
     const data = getDataset();
     return data
-      .map((w) => w.wilaya)
-      .sort((a, b) => a.localeCompare(b, 'fr'));
+      .map((w) => w.wilaya);
+      // Preserve the order from JSON file (official 01-69 numbering)
   }
 
   @Get('wilayas/:wilaya/dairas')
@@ -53,17 +53,15 @@ export class LocationsController {
     const hay = getDataset();
     const key = decodeURIComponent(wilaya).toLowerCase();
     const found = hay.find((w) => (w.wilaya || '').toLowerCase() === key);
-    return found ? [...found.dairas].sort((a, b) => a.localeCompare(b, 'fr')) : [];
+    return found ? [...found.dairas] : []; // Preserve JSON file order
   }
 
   @Get('wilaya-dairas')
   listWilayaDairas(): Record<string, string[]> {
     const map: Record<string, string[]> = {};
     getDataset().forEach((w) => {
-      map[w.wilaya] = [...w.dairas].sort((a, b) => a.localeCompare(b, 'fr'));
+      map[w.wilaya] = [...w.dairas]; // Preserve JSON file order
     });
-    return Object.fromEntries(
-      Object.entries(map).sort(([a], [b]) => a.localeCompare(b, 'fr'))
-    );
+    return map; // Preserve JSON file order
   }
 }
