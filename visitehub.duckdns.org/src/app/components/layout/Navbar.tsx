@@ -51,6 +51,12 @@ export function Navbar() {
             <Link href="/properties" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 text-sm lg:text-base">
               Propriétés
             </Link>
+            <Link href="/promoteurs" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 text-sm lg:text-base">
+              Promoteurs
+            </Link>
+            <Link href="/agences" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 text-sm lg:text-base">
+              Agences
+            </Link>
           </nav>
 
           {/* Desktop Full Navigation (xl and above - 1280px+) - Shows all links */}
@@ -61,6 +67,12 @@ export function Navbar() {
               </Link>
               <Link href="/properties" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200">
                 Propriétés
+              </Link>
+              <Link href="/promoteurs" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200">
+                Promoteurs
+              </Link>
+              <Link href="/agences" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200">
+                Agences
               </Link>
               <Link href="/blog" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200">
                 Blog
@@ -135,6 +147,20 @@ export function Navbar() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Propriétés
+              </Link>
+              <Link 
+                href="/promoteurs" 
+                className="block px-3 py-2 text-slate-700 hover:text-emerald-500 hover:bg-emerald-50 rounded-md transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Promoteurs
+              </Link>
+              <Link 
+                href="/agences" 
+                className="block px-3 py-2 text-slate-700 hover:text-emerald-500 hover:bg-emerald-50 rounded-md transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Agences
               </Link>
               <Link 
                 href="/vendre-louer" 

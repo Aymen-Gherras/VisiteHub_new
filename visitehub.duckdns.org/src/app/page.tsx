@@ -176,7 +176,7 @@ export default function HomePage() {
               Trouvez maintenant la propriété de vos rêves en Algérie
             </h2>
             <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-              Trouvez des propriétés dans 58 Wilaya différents représentés par 200 courtiers membres de premier plan.
+              Trouvez des propriétés dans 69 Wilaya différents représentés par 200 courtiers membres de premier plan.
             </p>
           </div>
         </div>
