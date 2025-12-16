@@ -4,18 +4,32 @@ import { useState, useEffect } from 'react';
 import { use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { PropertyCard } from '@/app/components/ui/PropertyCard';
 
 interface Property {
   id: string;
   title: string;
-  price: string;
-  surface: number;
-  bedrooms?: number;
-  images?: string[];
-  slug: string;
-  wilaya?: string;
+  description?: string;
+  price: string | number;
+  address?: string;
+  wilaya: string;
   daira?: string;
+  bedrooms?: number;
+  bathrooms?: number;
+  surface: number;
+  type: 'apartment' | 'house' | 'villa' | 'commercial' | 'land';
   transactionType: 'vendre' | 'location';
+  images?: string[];
+  iframe360Link?: string;
+  slug: string;
+  amenities?: string[];
+  nearbyPlaces?: any[];
+  papers?: string[];
+  rentPeriod?: 'month' | 'day';
+  propertyOwnerType?: string;
+  propertyOwnerName?: string;
+  phoneNumber?: string;
+  createdAt?: string;
 }
 
 interface Agence {
@@ -63,24 +77,64 @@ const getMockAgenceBySlug = (slug: string): Agence | null => {
         {
           id: '1',
           title: 'Appartement F3 Vue Mer',
-          price: '15,000,000 DZD',
-          surface: 95,
-          bedrooms: 3,
-          slug: 'appartement-f3-vue-mer',
+          description: 'Superbe F3 avec vue mer à Alger Centre',
+          price: 15000000,
+          address: '15 Rue Didouche Mourad, Alger Centre',
           wilaya: '16 - Alger',
           daira: 'Alger Centre',
-          transactionType: 'vendre'
+          bedrooms: 3,
+          bathrooms: 2,
+          surface: 95,
+          type: 'apartment',
+          transactionType: 'vendre',
+          slug: 'appartement-f3-vue-mer',
+          images: ['https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg?auto=compress&cs=tinysrgb&w=800'],
+          iframe360Link: '',
+          amenities: ['Parking', 'Ascenseur', 'Balcon'],
+          nearbyPlaces: [
+            { id: '1', name: 'Parking', distance: 'Dans le bâtiment', icon: '🅿️', displayOrder: 1, createdAt: new Date().toISOString() },
+            { id: '2', name: 'Ascenseur', distance: 'Inclus', icon: '🛗', displayOrder: 2, createdAt: new Date().toISOString() },
+            { id: '3', name: 'Balcon', distance: '8 m²', icon: '🪟', displayOrder: 3, createdAt: new Date().toISOString() },
+            { id: '4', name: 'Patisserie la rosa', distance: '100m', icon: '🍰', displayOrder: 4, createdAt: new Date().toISOString() },
+            { id: '5', name: 'Arret de bus', distance: '50m', icon: '🚌', displayOrder: 5, createdAt: new Date().toISOString() },
+            { id: '6', name: 'Pharmacie', distance: '200m', icon: '💊', displayOrder: 6, createdAt: new Date().toISOString() }
+          ],
+          papers: ['Acte de propriété', 'Livret foncier'],
+          propertyOwnerType: 'Agence immobilière',
+          propertyOwnerName: 'Immobilier Excellence',
+          phoneNumber: '+213 550 11 22 33',
+          createdAt: new Date().toISOString()
         },
         {
           id: '2',
           title: 'Villa Moderne Hydra',
-          price: '85,000,000 DZD',
-          surface: 350,
-          bedrooms: 5,
-          slug: 'villa-moderne-hydra',
+          description: 'Magnifique villa moderne à Hydra',
+          price: 85000000,
+          address: 'Hydra, Alger',
           wilaya: '16 - Alger',
           daira: 'Hydra',
-          transactionType: 'vendre'
+          bedrooms: 5,
+          bathrooms: 3,
+          surface: 350,
+          type: 'villa',
+          transactionType: 'vendre',
+          slug: 'villa-moderne-hydra',
+          images: ['https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'],
+          iframe360Link: '',
+          amenities: ['Piscine', 'Jardin', 'Garage'],
+          nearbyPlaces: [
+            { id: '1', name: 'Piscine', distance: 'Privée', icon: '🏊', displayOrder: 1, createdAt: new Date().toISOString() },
+            { id: '2', name: 'Jardin', distance: '200 m²', icon: '🌳', displayOrder: 2, createdAt: new Date().toISOString() },
+            { id: '3', name: 'Garage', distance: '2 places', icon: '🚗', displayOrder: 3, createdAt: new Date().toISOString() },
+            { id: '4', name: 'Sécurité 24/7', distance: 'Inclus', icon: '👮', displayOrder: 4, createdAt: new Date().toISOString() },
+            { id: '5', name: 'C.E.M Tripoli', distance: '300m', icon: '🏫', displayOrder: 5, createdAt: new Date().toISOString() },
+            { id: '6', name: 'Climatisation', distance: 'Toutes les pièces', icon: '❄️', displayOrder: 6, createdAt: new Date().toISOString() }
+          ],
+          papers: ['Acte de propriété', 'Livret foncier'],
+          propertyOwnerType: 'Agence immobilière',
+          propertyOwnerName: 'Immobilier Excellence',
+          phoneNumber: '+213 550 11 22 33',
+          createdAt: new Date().toISOString()
         }
       ]
     },
@@ -301,75 +355,11 @@ export default function AgencePage({ params }: AgencePageProps) {
         {agence.properties && agence.properties.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {agence.properties.map((property) => (
-              <Link
-                key={property.id}
-                href={`/properties/${property.slug}`}
-                className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden group"
-              >
-                {/* Property Image */}
-                <div className="relative h-48 bg-gray-200">
-                  {property.images && property.images.length > 0 ? (
-                    <Image
-                      src={property.images[0]}
-                      alt={property.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-gray-400 text-center">
-                        <div className="text-5xl mb-2">🏠</div>
-                      </div>
-                    </div>
-                  )}
-                  {/* Transaction Badge */}
-                  <div className="absolute top-4 left-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      property.transactionType === 'vendre' ? 'bg-blue-500 text-white' : 'bg-purple-500 text-white'
-                    }`}>
-                      {property.transactionType === 'vendre' ? 'À Vendre' : 'À Louer'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Property Info */}
-                <div className="p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-teal-600 transition-colors line-clamp-2">
-                    {property.title}
-                  </h3>
-                  
-                  <p className="text-2xl font-bold text-teal-600 mb-3">{property.price}</p>
-
-                  {/* Location */}
-                  {(property.wilaya || property.daira) && (
-                    <div className="flex items-center text-sm text-gray-500 mb-3">
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      {property.daira && property.wilaya ? `${property.daira}, ${property.wilaya}` : property.wilaya}
-                    </div>
-                  )}
-
-                  {/* Property Details */}
-                  <div className="flex items-center gap-4 text-sm text-gray-600 pt-3 border-t border-gray-100">
-                    <div className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                      </svg>
-                      <span>{property.surface}m²</span>
-                    </div>
-                    {property.bedrooms && (
-                      <div className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                        </svg>
-                        <span>{property.bedrooms} ch.</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Link>
+              <PropertyCard 
+                key={property.id} 
+                property={property as any} 
+                href={`/agences/${agence.slug}/${property.slug}`}
+              />
             ))}
           </div>
         ) : (

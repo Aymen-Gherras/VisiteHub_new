@@ -12,12 +12,14 @@ interface PropertyCardProps {
   property: Property;
   className?: string;
   showVirtualTour?: boolean;
+  href?: string; // Optional custom link (e.g., for agency-specific property pages)
 }
 
 export const PropertyCard: React.FC<PropertyCardProps> = ({
   property,
   className = '',
-  showVirtualTour = true
+  showVirtualTour = true,
+  href
 }) => {
   const handleCallClick = () => {
     window.location.href = 'tel:+213556267621';
@@ -46,7 +48,8 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
 
-  const propertyPath = property.slug ? `/properties/${property.slug}` : `/properties/${slugify(property.title)}-${property.id}`;
+  // Use custom href if provided, otherwise default to /properties/{slug}
+  const propertyPath = href || (property.slug ? `/properties/${property.slug}` : `/properties/${slugify(property.title)}-${property.id}`);
 
   // Generate SEO-friendly alt text and title
   const propertyTypeLabel = getPropertyTypeLabel(property.type);
