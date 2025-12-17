@@ -117,6 +117,9 @@ export class Property {
   @Column({ type: 'varchar', length: 255, nullable: true })
   propertyOwnerName?: string; // Name of agency or promotion company (only for 'Agence immobilière' or 'Promotion immobilière')
 
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  projectId?: string;
+
   @OneToMany(() => PropertyImage, (image) => image.property, { cascade: true })
   images: PropertyImage[];
 

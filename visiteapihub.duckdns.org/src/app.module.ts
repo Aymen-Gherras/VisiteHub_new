@@ -25,6 +25,7 @@ import { DbAutoMigrateService } from './config/db-auto-migrate.service';
 import { SiteSettingsModule } from './site-settings/site-settings.module';
 import { AgencesModule } from './agences/agences.module';
 import { PromoteursModule } from './promoteurs/promoteurs.module';
+import { ProjectsModule } from './projects/projects.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { CommonModule } from './common/common.module';
 
@@ -105,6 +106,7 @@ import { CommonModule } from './common/common.module';
     SiteSettingsModule,
     AgencesModule,
     PromoteursModule,
+    ProjectsModule,
   ],
 
   controllers: [AppController],

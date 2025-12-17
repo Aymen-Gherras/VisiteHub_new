@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber, IsEnum, IsArray, Min, Max } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, IsEnum, IsArray, Min, Max, IsUUID } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { escape } from 'html-escaper';
 import { PropertyType, TransactionType } from '../entities/property.entity';
@@ -117,6 +117,11 @@ export class CreatePropertyDto {
   @IsString()
   @IsOptional()
   propertyOwnerName?: string; // Name of agency or promotion company (only for 'Agence immobilière' or 'Promotion immobilière')
+
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsUUID()
+  @IsOptional()
+  projectId?: string;
 
   @IsString()
   @IsOptional()

@@ -41,6 +41,7 @@ export interface Property {
   rentPeriod?: 'month' | 'day';
   propertyOwnerType?: string; // 'Particulier', 'Agence immobilière', 'Promotion immobilière'
   propertyOwnerName?: string; // Name of agency or promotion company (only for 'Agence immobilière' or 'Promotion immobilière')
+  projectId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -120,6 +121,40 @@ export interface CreatePromoteurDto {
 
 export interface UpdatePromoteurDto extends Partial<CreatePromoteurDto> {}
 
+// Projects (inside Promoteur)
+export interface Project {
+  id: string;
+  promoteurId: string;
+  name: string;
+  slug?: string;
+  description?: string;
+  wilaya?: string;
+  daira?: string;
+  address?: string;
+  status?: 'completed' | 'construction' | 'planning' | 'suspended';
+  coverImage?: string;
+  totalUnits?: number;
+  availableUnits?: number;
+  deliveryDate?: string;
+  floorsCount?: number;
+  unitsPerFloor?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateProjectDto {
+  name: string;
+  slug?: string;
+  description?: string;
+  wilaya?: string;
+  daira?: string;
+  address?: string;
+  floorsCount?: number;
+  unitsPerFloor?: number;
+}
+
+export interface UpdateProjectDto extends Partial<CreateProjectDto> {}
+
 export interface CreatePropertyDto {
   title: string;
   description: string;
@@ -145,6 +180,7 @@ export interface CreatePropertyDto {
   rentPeriod?: 'month' | 'day';
   propertyOwnerType: string; // 'Particulier', 'Agence immobilière', 'Promotion immobilière'
   propertyOwnerName?: string; // Name of agency or promotion company (only for 'Agence immobilière' or 'Promotion immobilière')
+  projectId?: string;
 }
 
 export interface UpdatePropertyDto extends Partial<CreatePropertyDto> {}
@@ -1153,6 +1189,62 @@ export class ApiService {
       throw new Error('Invalid promoteur ID');
     }
     return this.makeRequest<void>(`/api/promoteurs/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  // Promoteur Projects API
+  async listPromoteurProjects(promoteurId: string): Promise<Project[]> {
+    if (!promoteurId || typeof promoteurId !== 'string') {
+      throw new Error('Invalid promoteur ID');
+    }
+    const ts = Date.now();
+    return this.makeRequest<Project[]>(`/api/promoteurs/${promoteurId}/projects?_=${ts}`);
+  }
+
+  async createPromoteurProject(promoteurId: string, data: CreateProjectDto, token: string): Promise<Project> {
+    if (!promoteurId || typeof promoteurId !== 'string') {
+      throw new Error('Invalid promoteur ID');
+    }
+    if (!data?.name) {
+      throw new Error('Missing required field: name');
+    }
+    return this.makeRequest<Project>(`/api/promoteurs/${promoteurId}/projects`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getPromoteurProject(promoteurId: string, projectId: string): Promise<Project> {
+    if (!promoteurId || typeof promoteurId !== 'string') throw new Error('Invalid promoteur ID');
+    if (!projectId || typeof projectId !== 'string') throw new Error('Invalid project ID');
+    return this.makeRequest<Project>(`/api/promoteurs/${promoteurId}/projects/${projectId}`);
+  }
+
+  async updatePromoteurProject(promoteurId: string, projectId: string, data: UpdateProjectDto, token: string): Promise<Project> {
+    if (!promoteurId || typeof promoteurId !== 'string') throw new Error('Invalid promoteur ID');
+    if (!projectId || typeof projectId !== 'string') throw new Error('Invalid project ID');
+    return this.makeRequest<Project>(`/api/promoteurs/${promoteurId}/projects/${projectId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deletePromoteurProject(promoteurId: string, projectId: string, token: string): Promise<void> {
+    if (!promoteurId || typeof promoteurId !== 'string') throw new Error('Invalid promoteur ID');
+    if (!projectId || typeof projectId !== 'string') throw new Error('Invalid project ID');
+    return this.makeRequest<void>(`/api/promoteurs/${promoteurId}/projects/${projectId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,

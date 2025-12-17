@@ -16,7 +16,12 @@ export class DbAutoMigrateService implements OnModuleInit {
       await this.ensureFeaturedPropertiesTable();
       await this.ensureNearbyPlacesTable();
       await this.ensureBlogPostsTableUtf8mb4();
-      await this.removePromotionProjectColumns();
+      // Legacy cleanup (previously removed promotions/projects). Disabled by default.
+      if (process.env.AUTO_REMOVE_PROMOTION_PROJECT_COLUMNS === 'true') {
+        await this.removePromotionProjectColumns();
+      } else {
+        this.logger.log('Skipping legacy promotion/project cleanup (AUTO_REMOVE_PROMOTION_PROJECT_COLUMNS != true)');
+      }
     } catch (err) {
       this.logger.error('Auto-migration failed', err as any);
       // Do not crash the app; continue running without the new features

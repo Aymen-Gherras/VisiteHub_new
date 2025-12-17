@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiService } from '../../../../api';
 import { useAuth } from '../../../../context/AuthContext';
+import type { Promoteur } from '../../../../api';
 
 export default function CreatePromoteur() {
   const router = useRouter();
@@ -12,6 +13,9 @@ export default function CreatePromoteur() {
   const [error, setError] = useState<string | null>(null);
   const [wilayas, setWilayas] = useState<string[]>([]);
   const [dairas, setDairas] = useState<string[]>([]);
+
+  const [step, setStep] = useState<1 | 2>(1);
+  const [createdPromoteur, setCreatedPromoteur] = useState<Promoteur | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -24,6 +28,15 @@ export default function CreatePromoteur() {
     daira: '',
     website: '',
     logo: '',
+  });
+
+  const [projectData, setProjectData] = useState({
+    name: '',
+    slug: '',
+    description: '',
+    wilaya: '',
+    daira: '',
+    address: '',
   });
 
   // Fetch wilayas on mount
@@ -39,7 +52,7 @@ export default function CreatePromoteur() {
     fetchWilayas();
   }, []);
 
-  // Fetch dairas when wilaya changes
+  // Fetch dairas when wilaya changes (Step 1)
   useEffect(() => {
     const fetchDairas = async () => {
       if (!formData.wilaya) {
@@ -57,6 +70,24 @@ export default function CreatePromoteur() {
     fetchDairas();
   }, [formData.wilaya]);
 
+  // Fetch dairas when project wilaya changes (Step 2)
+  useEffect(() => {
+    const fetchDairas = async () => {
+      if (!projectData.wilaya) {
+        setDairas([]);
+        return;
+      }
+      try {
+        const data = await apiService.listDairas(projectData.wilaya);
+        setDairas(data);
+      } catch (err) {
+        console.error('Error fetching dairas:', err);
+        setDairas([]);
+      }
+    };
+    if (step === 2) fetchDairas();
+  }, [projectData.wilaya, step]);
+
   // Auto-generate slug from name
   useEffect(() => {
     if (formData.name && !formData.slug) {
@@ -73,6 +104,11 @@ export default function CreatePromoteur() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleProjectChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setProjectData(prev => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -85,11 +121,41 @@ export default function CreatePromoteur() {
     setError(null);
 
     try {
-      await apiService.createPromoteur(formData, token);
-      router.push('/admin/promoteurs');
+      const promoteur = await apiService.createPromoteur(formData, token);
+      setCreatedPromoteur(promoteur);
+      setStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       console.error('Error creating promoteur:', err);
       setError(err instanceof Error ? err.message : 'Failed to create promoteur');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!token) {
+      alert('Authentication required. Please log in.');
+      return;
+    }
+
+    if (!createdPromoteur?.id) {
+      setError('Promoteur was not created correctly.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await apiService.createPromoteurProject(createdPromoteur.id, projectData, token);
+      router.push('/admin/promoteurs');
+    } catch (err) {
+      console.error('Error creating project:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create project');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setLoading(false);
@@ -134,8 +200,19 @@ export default function CreatePromoteur() {
           </div>
         )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        {/* Step header */}
+        <div className="mb-6 flex items-center gap-3">
+          <div className={`px-3 py-1 rounded-full text-sm font-medium ${step === 1 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700'}`}>
+            1) Promoteur
+          </div>
+          <div className={`px-3 py-1 rounded-full text-sm font-medium ${step === 2 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700'}`}>
+            2) Project
+          </div>
+        </div>
+
+        {/* Step 1: Promoteur Form */}
+        {step === 1 && (
+          <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="space-y-6">
             {/* Name */}
             <div>
@@ -339,6 +416,132 @@ export default function CreatePromoteur() {
             </button>
           </div>
         </form>
+        )}
+
+        {/* Step 2: Project Form */}
+        {step === 2 && (
+          <form onSubmit={handleCreateProject} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="space-y-6">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <div className="text-sm text-blue-900">
+                  Promoteur created: <span className="font-semibold">{createdPromoteur?.name}</span>. Now create the first project inside this promoteur.
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="project-name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Project Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="project-name"
+                  name="name"
+                  value={projectData.name}
+                  onChange={handleProjectChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g. Résidence El Bahia"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="project-description" className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  id="project-description"
+                  name="description"
+                  value={projectData.description}
+                  onChange={handleProjectChange}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Project description"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="project-wilaya" className="block text-sm font-medium text-gray-700 mb-2">
+                    Wilaya
+                  </label>
+                  <select
+                    id="project-wilaya"
+                    name="wilaya"
+                    value={projectData.wilaya}
+                    onChange={handleProjectChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select wilaya</option>
+                    {wilayas.map((w) => (
+                      <option key={w} value={w}>{w}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="project-daira" className="block text-sm font-medium text-gray-700 mb-2">
+                    Daira
+                  </label>
+                  <select
+                    id="project-daira"
+                    name="daira"
+                    value={projectData.daira}
+                    onChange={handleProjectChange}
+                    disabled={!projectData.wilaya || dairas.length === 0}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                  >
+                    <option value="">Select daira</option>
+                    {dairas.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="project-address" className="block text-sm font-medium text-gray-700 mb-2">
+                  Address
+                </label>
+                <input
+                  type="text"
+                  id="project-address"
+                  name="address"
+                  value={projectData.address}
+                  onChange={handleProjectChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Address"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  ← Back
+                </button>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => router.push('/admin/promoteurs')}
+                    className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Skip for now
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  >
+                    {loading ? 'Creating...' : 'Create Project'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
