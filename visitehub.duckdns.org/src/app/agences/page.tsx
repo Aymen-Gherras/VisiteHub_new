@@ -19,56 +19,24 @@ interface Agence {
   id: string;
   name: string;
   slug: string;
-  wilaya: string;
+  wilaya?: string;
   daira?: string;
   description?: string;
   logo?: string;
+  email?: string;
+  phoneNumber?: string;
+  address?: string;
+  website?: string;
+  createdAt?: string;
+  updatedAt?: string;
   propertiesCount: number;
   initials: string;
   bgColor: string;
 }
 
-// Mock data - replace with API call once backend is ready
-// TODO: Connect to backend API endpoint: GET /api/agences
-const mockAgences: Agence[] = [
-  {
-    id: '1',
-    name: 'Immobilier Excellence',
-    slug: 'immobilier-excellence',
-    wilaya: '16 - Alger',
-    daira: 'Alger Centre',
-    description: 'Votre agence de confiance pour trouver le bien immobilier qui vous correspond...',
-    propertiesCount: 45,
-    initials: 'IE',
-    bgColor: 'bg-blue-600'
-  },
-  {
-    id: '2',
-    name: 'Agence du Patrimoine',
-    slug: 'agence-du-patrimoine',
-    wilaya: '31 - Oran',
-    daira: 'Oran',
-    description: 'Spécialistes de l\'immobilier haut de gamme et des résidences de luxe...',
-    propertiesCount: 32,
-    initials: 'AP',
-    bgColor: 'bg-purple-600'
-  },
-  {
-    id: '3',
-    name: 'Immobilière Constantine',
-    slug: 'immobiliere-constantine',
-    wilaya: '25 - Constantine',
-    daira: 'Constantine',
-    description: 'Des professionnels à votre écoute pour tous vos projets immobiliers...',
-    propertiesCount: 28,
-    initials: 'IC',
-    bgColor: 'bg-indigo-600'
-  }
-];
-
 export default function AgencesPage() {
-  const [agences, setAgences] = useState<Agence[]>(mockAgences);
-  const [loading, setLoading] = useState(false);
+  const [agences, setAgences] = useState<Agence[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedWilaya, setSelectedWilaya] = useState('');
   const [selectedDaira, setSelectedDaira] = useState('');
@@ -85,6 +53,46 @@ export default function AgencesPage() {
   
   const wilayaBtnRef = useRef<HTMLButtonElement | null>(null);
   const dairaBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  // Helper to generate initials and color
+  const generateInitials = (name: string): string => {
+    const words = name.split(' ');
+    return words.slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  };
+
+  const colors = ['bg-blue-600', 'bg-purple-600', 'bg-indigo-600', 'bg-green-600', 'bg-red-600', 'bg-yellow-600', 'bg-pink-600'];
+  const getColor = (id: string): string => {
+    return colors[parseInt(id.substring(0, 8), 16) % colors.length];
+  };
+
+  // Fetch agences from API
+  useEffect(() => {
+    let mounted = true;
+    const fetchAgences = async () => {
+      try {
+        setLoading(true);
+        const data = await apiService.getAgences();
+        if (!mounted) return;
+        
+        // Transform API data to include UI-specific fields
+        const transformedData: Agence[] = data.map((agence) => ({
+          ...agence,
+          propertiesCount: 0, // TODO: Add property count from backend
+          initials: generateInitials(agence.name),
+          bgColor: getColor(agence.id),
+        }));
+        
+        setAgences(transformedData);
+      } catch (err) {
+        console.error('Error fetching agences:', err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+    
+    fetchAgences();
+    return () => { mounted = false; };
+  }, []);
 
   // Load wilayas
   useEffect(() => {
@@ -118,7 +126,7 @@ export default function AgencesPage() {
     return agences.filter((a) => {
       const matchesSearch = !searchQuery.trim() ||
         a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        a.wilaya.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.wilaya?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         a.description?.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesWilaya = !selectedWilaya || a.wilaya === selectedWilaya;

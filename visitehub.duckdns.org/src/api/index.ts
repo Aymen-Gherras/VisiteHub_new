@@ -56,6 +56,70 @@ export interface CreatePaperDto {
   name: string;
 }
 
+// Agence interfaces
+export interface Agence {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  email?: string;
+  phoneNumber?: string;
+  address?: string;
+  wilaya?: string;
+  daira?: string;
+  website?: string;
+  logo?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAgenceDto {
+  name: string;
+  slug: string;
+  description?: string;
+  email?: string;
+  phoneNumber?: string;
+  address?: string;
+  wilaya?: string;
+  daira?: string;
+  website?: string;
+  logo?: string;
+}
+
+export interface UpdateAgenceDto extends Partial<CreateAgenceDto> {}
+
+// Promoteur interfaces
+export interface Promoteur {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  email?: string;
+  phoneNumber?: string;
+  address?: string;
+  wilaya?: string;
+  daira?: string;
+  website?: string;
+  logo?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePromoteurDto {
+  name: string;
+  slug: string;
+  description?: string;
+  email?: string;
+  phoneNumber?: string;
+  address?: string;
+  wilaya?: string;
+  daira?: string;
+  website?: string;
+  logo?: string;
+}
+
+export interface UpdatePromoteurDto extends Partial<CreatePromoteurDto> {}
+
 export interface CreatePropertyDto {
   title: string;
   description: string;
@@ -969,6 +1033,126 @@ export class ApiService {
 
   async deleteAllNearbyPlaces(propertyId: string, token: string): Promise<void> {
     return this.makeRequest<void>(`/api/nearby-places/property/${propertyId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  // Agences API
+  async getAgences(): Promise<Agence[]> {
+    const ts = Date.now();
+    return this.makeRequest<Agence[]>(`/api/agences?_=${ts}`);
+  }
+
+  async getAgence(id: string): Promise<Agence> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid agence ID');
+    }
+    return this.makeRequest<Agence>(`/api/agences/${id}`);
+  }
+
+  async getAgenceBySlug(slug: string): Promise<Agence> {
+    if (!slug || typeof slug !== 'string') {
+      throw new Error('Invalid agence slug');
+    }
+    return this.makeRequest<Agence>(`/api/agences/slug/${encodeURIComponent(slug)}`);
+  }
+
+  async createAgence(data: CreateAgenceDto, token: string): Promise<Agence> {
+    if (!data.name || !data.email) {
+      throw new Error('Missing required fields: name, email');
+    }
+    return this.makeRequest<Agence>('/api/agences', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateAgence(id: string, data: UpdateAgenceDto, token: string): Promise<Agence> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid agence ID');
+    }
+    return this.makeRequest<Agence>(`/api/agences/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteAgence(id: string, token: string): Promise<void> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid agence ID');
+    }
+    return this.makeRequest<void>(`/api/agences/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  // Promoteurs API
+  async getPromoteurs(): Promise<Promoteur[]> {
+    const ts = Date.now();
+    return this.makeRequest<Promoteur[]>(`/api/promoteurs?_=${ts}`);
+  }
+
+  async getPromoteur(id: string): Promise<Promoteur> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid promoteur ID');
+    }
+    return this.makeRequest<Promoteur>(`/api/promoteurs/${id}`);
+  }
+
+  async getPromoteurBySlug(slug: string): Promise<Promoteur> {
+    if (!slug || typeof slug !== 'string') {
+      throw new Error('Invalid promoteur slug');
+    }
+    return this.makeRequest<Promoteur>(`/api/promoteurs/slug/${encodeURIComponent(slug)}`);
+  }
+
+  async createPromoteur(data: CreatePromoteurDto, token: string): Promise<Promoteur> {
+    if (!data.name || !data.email) {
+      throw new Error('Missing required fields: name, email');
+    }
+    return this.makeRequest<Promoteur>('/api/promoteurs', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updatePromoteur(id: string, data: UpdatePromoteurDto, token: string): Promise<Promoteur> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid promoteur ID');
+    }
+    return this.makeRequest<Promoteur>(`/api/promoteurs/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deletePromoteur(id: string, token: string): Promise<void> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid promoteur ID');
+    }
+    return this.makeRequest<void>(`/api/promoteurs/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,

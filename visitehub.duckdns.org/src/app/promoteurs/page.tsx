@@ -9,10 +9,16 @@ interface Promoteur {
   id: string;
   name: string;
   slug: string;
-  wilaya: string;
+  wilaya?: string;
   daira?: string;
   description?: string;
   logo?: string;
+  email?: string;
+  phoneNumber?: string;
+  address?: string;
+  website?: string;
+  createdAt?: string;
+  updatedAt?: string;
   projectsCount: number;
   initials: string;
   bgColor: string;
@@ -28,47 +34,9 @@ const generateSlug = (name: string): string => {
     .replace(/-+/g, '-'); // Replace multiple hyphens with single hyphen
 };
 
-// Mock data - This will be replaced with API call from admin panel
-// TODO: Connect to backend API endpoint: GET /api/promoteurs
-const mockPromoteurs: Promoteur[] = [
-  {
-    id: '1',
-    name: 'Bessa Promotion',
-    slug: 'bessa-promotion',
-    wilaya: '16 - Alger',
-    daira: 'Alger',
-    description: 'Leader de la promotion immobilière, nous construisons l\'avenir avec des résidences haut...',
-    projectsCount: 12,
-    initials: 'BE',
-    bgColor: 'bg-gray-700'
-  },
-  {
-    id: '2',
-    name: 'Hasnaoui Immobilier',
-    slug: 'hasnaoui-immobilier',
-    wilaya: '31 - Oran',
-    daira: 'Oran',
-    description: 'Une expertise reconnue dans la construction de cités intégrées et d\'espaces durables...',
-    projectsCount: 8,
-    initials: 'HA',
-    bgColor: 'bg-teal-500'
-  },
-  {
-    id: '3',
-    name: 'Goumid Promotion',
-    slug: 'goumid-promotion',
-    wilaya: '25 - Constantine',
-    daira: 'Constantine',
-    description: 'Votre partenaire de confiance pour des logements de qualité supérieure au cœur de la ville...',
-    projectsCount: 5,
-    initials: 'GO',
-    bgColor: 'bg-gray-700'
-  }
-];
-
 export default function PromoteursPage() {
-  const [promoteurs, setPromoteurs] = useState<Promoteur[]>(mockPromoteurs);
-  const [loading, setLoading] = useState(false);
+  const [promoteurs, setPromoteurs] = useState<Promoteur[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedWilaya, setSelectedWilaya] = useState('');
   const [selectedDaira, setSelectedDaira] = useState('');
@@ -85,6 +53,46 @@ export default function PromoteursPage() {
   
   const wilayaBtnRef = useRef<HTMLButtonElement | null>(null);
   const dairaBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  // Helper to generate initials and color
+  const generateInitials = (name: string): string => {
+    const words = name.split(' ');
+    return words.slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  };
+
+  const colors = ['bg-gray-700', 'bg-teal-500', 'bg-blue-600', 'bg-purple-600', 'bg-indigo-600', 'bg-green-600', 'bg-red-600'];
+  const getColor = (id: string): string => {
+    return colors[parseInt(id.substring(0, 8), 16) % colors.length];
+  };
+
+  // Fetch promoteurs from API
+  useEffect(() => {
+    let mounted = true;
+    const fetchPromoteurs = async () => {
+      try {
+        setLoading(true);
+        const data = await apiService.getPromoteurs();
+        if (!mounted) return;
+        
+        // Transform API data to include UI-specific fields
+        const transformedData: Promoteur[] = data.map((promoteur) => ({
+          ...promoteur,
+          projectsCount: 0, // TODO: Add project count from backend
+          initials: generateInitials(promoteur.name),
+          bgColor: getColor(promoteur.id),
+        }));
+        
+        setPromoteurs(transformedData);
+      } catch (err) {
+        console.error('Error fetching promoteurs:', err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+    
+    fetchPromoteurs();
+    return () => { mounted = false; };
+  }, []);
 
   // Load wilayas
   useEffect(() => {
@@ -118,7 +126,7 @@ export default function PromoteursPage() {
     return promoteurs.filter((p) => {
       const matchesSearch = !searchQuery.trim() ||
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.wilaya.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.wilaya?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.description?.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesWilaya = !selectedWilaya || p.wilaya === selectedWilaya;

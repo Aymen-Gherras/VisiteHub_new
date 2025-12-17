@@ -23,6 +23,8 @@ import { LocationsModule } from './locations/locations.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { DbAutoMigrateService } from './config/db-auto-migrate.service';
 import { SiteSettingsModule } from './site-settings/site-settings.module';
+import { AgencesModule } from './agences/agences.module';
+import { PromoteursModule } from './promoteurs/promoteurs.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { CommonModule } from './common/common.module';
 
@@ -101,6 +103,8 @@ import { CommonModule } from './common/common.module';
     LocationsModule,
     AnalyticsModule,
     SiteSettingsModule,
+    AgencesModule,
+    PromoteursModule,
   ],
 
   controllers: [AppController],

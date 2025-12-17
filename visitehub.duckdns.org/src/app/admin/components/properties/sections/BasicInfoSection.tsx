@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Property, apiService } from '../../../../../api';
+import { useState, useEffect } from 'react';
+import { Property, apiService, Agence, Promoteur } from '../../../../../api';
 
 interface BasicInfoSectionProps {
   propertyData: Partial<Property>;
@@ -41,12 +41,38 @@ export default function BasicInfoSection({ propertyData, setPropertyData, onNext
   const [selectedOwnerType, setSelectedOwnerType] = useState(propertyData.propertyOwnerType || 'Particulier');
   const [propertyOwnerName, setPropertyOwnerName] = useState((propertyData as any)?.propertyOwnerName || '');
   const [title, setTitle] = useState(propertyData.title || '');
+  
+  // Agences and Promoteurs state
+  const [agences, setAgences] = useState<Agence[]>([]);
+  const [promoteurs, setPromoteurs] = useState<Promoteur[]>([]);
+  const [loadingOwners, setLoadingOwners] = useState(false);
+  
   // Ensure price is always treated as a string, preserving full text like "1 milliards"
   const initialPrice = propertyData.price !== undefined && propertyData.price !== null 
     ? (typeof propertyData.price === 'string' ? propertyData.price : String(propertyData.price))
     : '';
   const [price, setPrice] = useState(initialPrice);
   const [surface, setSurface] = useState(propertyData.surface?.toString() || '');
+
+  // Fetch agences and promoteurs on mount
+  useEffect(() => {
+    const fetchOwners = async () => {
+      setLoadingOwners(true);
+      try {
+        const [agencesData, promoteursData] = await Promise.all([
+          apiService.getAgences(),
+          apiService.getPromoteurs()
+        ]);
+        setAgences(agencesData);
+        setPromoteurs(promoteursData);
+      } catch (err) {
+        console.error('Error fetching agences/promoteurs:', err);
+      } finally {
+        setLoadingOwners(false);
+      }
+    };
+    fetchOwners();
+  }, []);
 
   const handleNext = () => {
     if (!selectedType || !selectedTransaction || !title || !price || !surface || !selectedOwnerType) {
@@ -229,16 +255,66 @@ export default function BasicInfoSection({ propertyData, setPropertyData, onNext
       {(selectedOwnerType === 'Agence immobilière' || selectedOwnerType === 'Promotion immobilière') && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            {selectedOwnerType === 'Agence immobilière' ? 'Agency Name' : 'Promotion Company Name'} *
+            {selectedOwnerType === 'Agence immobilière' ? 'Select Agency' : 'Select Promotion Company'} *
           </label>
-          <input
-            type="text"
-            value={propertyOwnerName}
-            onChange={(e) => setPropertyOwnerName(e.target.value)}
-            placeholder={`Enter ${selectedOwnerType === 'Agence immobilière' ? 'agency' : 'promotion company'} name`}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            required
-          />
+          {loadingOwners ? (
+            <div className="flex items-center justify-center py-3">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
+              <span className="ml-2 text-sm text-gray-600">Loading...</span>
+            </div>
+          ) : (
+            <select
+              value={propertyOwnerName}
+              onChange={(e) => setPropertyOwnerName(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              required
+            >
+              <option value="">
+                {selectedOwnerType === 'Agence immobilière' 
+                  ? 'Select an agency...' 
+                  : 'Select a promotion company...'}
+              </option>
+              {selectedOwnerType === 'Agence immobilière' ? (
+                agences.length === 0 ? (
+                  <option value="" disabled>No agencies available</option>
+                ) : (
+                  agences.map((agence) => (
+                    <option key={agence.id} value={agence.name}>
+                      {agence.name}
+                    </option>
+                  ))
+                )
+              ) : (
+                promoteurs.length === 0 ? (
+                  <option value="" disabled>No promotion companies available</option>
+                ) : (
+                  promoteurs.map((promoteur) => (
+                    <option key={promoteur.id} value={promoteur.name}>
+                      {promoteur.name}
+                    </option>
+                  ))
+                )
+              )}
+            </select>
+          )}
+          {selectedOwnerType === 'Agence immobilière' && agences.length === 0 && !loadingOwners && (
+            <p className="mt-2 text-sm text-gray-500">
+              No agencies found. Please create an agency in the{' '}
+              <a href="/admin/agences/create" className="text-purple-600 hover:text-purple-800 underline">
+                Agences section
+              </a>{' '}
+              first.
+            </p>
+          )}
+          {selectedOwnerType === 'Promotion immobilière' && promoteurs.length === 0 && !loadingOwners && (
+            <p className="mt-2 text-sm text-gray-500">
+              No promotion companies found. Please create a promoter in the{' '}
+              <a href="/admin/promoteurs/create" className="text-purple-600 hover:text-purple-800 underline">
+                Promoteurs section
+              </a>{' '}
+              first.
+            </p>
+          )}
         </div>
       )}
 

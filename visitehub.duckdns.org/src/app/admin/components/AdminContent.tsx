@@ -21,6 +21,8 @@ export default function AdminContent({ children }: AdminContentProps) {
   const navigation = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: '📊' },
     { name: 'Properties', href: '/admin/properties', icon: '🏠' },
+    { name: 'Agences', href: '/admin/agences', icon: '🏢' },
+    { name: 'Promoteurs', href: '/admin/promoteurs', icon: '🏗️' },
     { name: 'Users', href: '/admin/users', icon: '👥' },
     { name: 'Demandes', href: '/admin/contacts', icon: '✉️' },
     { name: 'Blog', href: '/admin/blog', icon: '📝' },
