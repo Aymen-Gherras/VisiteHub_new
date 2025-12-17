@@ -17,7 +17,7 @@ export class NearbyPlace {
   @Column({ nullable: false })
   distance: string; // "300 m", "1.5 km"
 
-  @Column({ type: 'varchar', length: 255, default: '📍', nullable: false, name: 'icon' })
+  @Column({ type: 'varchar', length: 255, default: '', nullable: false, name: 'icon' })
   icon: string; // Icon emoji or SVG filename (e.g., '📍' or 'bus.svg')
 
   @Column({ type: 'int', default: 0, name: 'display_order' })
