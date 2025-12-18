@@ -1,15 +1,19 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Agence } from './entities/agence.entity';
 import { CreateAgenceDto } from './dto/create-agence.dto';
 import { UpdateAgenceDto } from './dto/update-agence.dto';
+import { Property } from '../properties/entities/property.entity';
 
 @Injectable()
 export class AgencesService {
   constructor(
+    private readonly dataSource: DataSource,
     @InjectRepository(Agence)
     private agenceRepository: Repository<Agence>,
+    @InjectRepository(Property)
+    private readonly propertiesRepository: Repository<Property>,
   ) {}
 
   async create(createAgenceDto: CreateAgenceDto): Promise<Agence> {
@@ -74,6 +78,13 @@ export class AgencesService {
 
   async remove(id: string): Promise<void> {
     const agence = await this.findOne(id);
-    await this.agenceRepository.remove(agence);
+
+    await this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(Property).delete({
+        propertyOwnerType: 'Agence immobilière',
+        propertyOwnerName: agence.name,
+      });
+      await manager.getRepository(Agence).remove(agence);
+    });
   }
 }

@@ -1,10 +1,14 @@
-import { Controller, Post, UseInterceptors, UploadedFile, BadRequestException, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile, BadRequestException, HttpCode, HttpStatus, Req } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { diskStorage } from 'multer';
+import { mkdirSync } from 'fs';
+import { extname, join } from 'path';
+import type { Request } from 'express';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('upload')
 export class UploadController {
-  constructor(private readonly cloudinaryService: CloudinaryService) {}
+  constructor(private readonly configService: ConfigService) {}
 
   @Post('image')
   @HttpCode(HttpStatus.CREATED)
@@ -12,6 +16,18 @@ export class UploadController {
     limits: {
       fileSize: 5 * 1024 * 1024, // 5MB limit
     },
+    storage: diskStorage({
+      destination: (req, file, cb) => {
+        const uploadPath = join(process.cwd(), 'uploads');
+        mkdirSync(uploadPath, { recursive: true });
+        cb(null, uploadPath);
+      },
+      filename: (req, file, cb) => {
+        const safeExt = extname(file.originalname || '').toLowerCase() || '.jpg';
+        const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+        cb(null, `${unique}${safeExt}`);
+      },
+    }),
     fileFilter: (req, file, cb) => {
       if (!file.mimetype.includes('image')) {
         return cb(new BadRequestException('Only image files are allowed'), false);
@@ -19,7 +35,7 @@ export class UploadController {
       cb(null, true);
     },
   }))
-  async uploadImage(@UploadedFile() file: Express.Multer.File) {
+  async uploadImage(@Req() req: Request, @UploadedFile() file: Express.Multer.File) {
     console.log('Upload request received');
     console.log('File:', file ? {
       fieldname: file.fieldname,
@@ -38,18 +54,15 @@ export class UploadController {
       throw new BadRequestException('Only image files are allowed');
     }
 
-    try {
-      console.log('Attempting to upload to Cloudinary...');
-      const imageUrl = await this.cloudinaryService.uploadImage(file);
-      console.log('Upload successful, URL:', imageUrl);
-      return {
-        success: true,
-        imageUrl,
-        message: 'Image uploaded successfully',
-      };
-    } catch (error) {
-      console.error('Upload error details:', error);
-      throw new BadRequestException(`Failed to upload image: ${error.message}`);
-    }
+    const configuredBaseUrl = this.configService.get<string>('PUBLIC_BASE_URL');
+    const inferredBaseUrl = `${req.protocol}://${req.get('host')}`;
+    const baseUrl = (configuredBaseUrl || inferredBaseUrl).replace(/\/$/, '');
+    const imageUrl = `${baseUrl}/uploads/${file.filename}`;
+
+    return {
+      success: true,
+      imageUrl,
+      message: 'Image uploaded successfully',
+    };
   }
 }

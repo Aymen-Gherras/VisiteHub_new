@@ -102,6 +102,8 @@ export interface Promoteur {
   daira?: string;
   website?: string;
   logo?: string;
+  coverImage?: string;
+  projectsCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -133,6 +135,7 @@ export interface Project {
   address?: string;
   status?: 'completed' | 'construction' | 'planning' | 'suspended';
   coverImage?: string;
+  propertiesCount?: number;
   totalUnits?: number;
   availableUnits?: number;
   deliveryDate?: string;

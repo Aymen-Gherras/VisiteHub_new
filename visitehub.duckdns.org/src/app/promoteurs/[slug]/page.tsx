@@ -279,7 +279,7 @@ export default function PromoteurPage({ params }: PromoteurPageProps) {
                   {/* Footer */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                     <div className="text-sm text-gray-500">
-                      {project.propertiesCount || 0} unités
+                      {project.propertiesCount || 0} Appartements
                     </div>
                     <div className="flex items-center gap-2 text-teal-600 font-medium text-sm group-hover:gap-3 transition-all">
                       Voir plus

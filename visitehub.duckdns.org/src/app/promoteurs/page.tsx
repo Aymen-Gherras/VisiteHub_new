@@ -77,7 +77,7 @@ export default function PromoteursPage() {
         // Transform API data to include UI-specific fields
         const transformedData: Promoteur[] = data.map((promoteur) => ({
           ...promoteur,
-          projectsCount: 0, // TODO: Add project count from backend
+          projectsCount: (promoteur as any).projectsCount ?? 0,
           initials: generateInitials(promoteur.name),
           bgColor: getColor(promoteur.id),
         }));

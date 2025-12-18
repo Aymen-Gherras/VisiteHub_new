@@ -1,18 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Project } from './entities/project.entity';
 import { Promoteur } from '../promoteurs/entities/promoteur.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { Property } from '../properties/entities/property.entity';
 
 @Injectable()
 export class ProjectsService {
   constructor(
+    private readonly dataSource: DataSource,
     @InjectRepository(Project)
     private readonly projectsRepository: Repository<Project>,
     @InjectRepository(Promoteur)
     private readonly promoteursRepository: Repository<Promoteur>,
+    @InjectRepository(Property)
+    private readonly propertiesRepository: Repository<Property>,
   ) {}
 
   private slugify(input: string): string {
@@ -46,10 +50,26 @@ export class ProjectsService {
     const promoteur = await this.promoteursRepository.findOne({ where: { id: promoteurId } });
     if (!promoteur) throw new NotFoundException('Promoteur not found');
 
-    return this.projectsRepository.find({
+    const projects = await this.projectsRepository.find({
       where: { promoteurId },
       order: { createdAt: 'DESC' },
     });
+
+    const projectIds = projects.map((p) => p.id).filter(Boolean);
+    if (projectIds.length === 0) return projects;
+
+    const rawCounts = await this.propertiesRepository
+      .createQueryBuilder('property')
+      .select('property.projectId', 'projectId')
+      .addSelect('COUNT(1)', 'count')
+      .where('property.projectId IN (:...projectIds)', { projectIds })
+      .groupBy('property.projectId')
+      .getRawMany<{ projectId: string; count: string }>();
+
+    const countByProjectId = new Map(rawCounts.map((r) => [r.projectId, Number(r.count || 0)]));
+
+    // Attach count without changing DB schema
+    return projects.map((p) => Object.assign(p, { propertiesCount: countByProjectId.get(p.id) ?? 0 }));
   }
 
   async findOne(promoteurId: string, projectId: string): Promise<Project> {
@@ -79,6 +99,10 @@ export class ProjectsService {
 
   async remove(promoteurId: string, projectId: string): Promise<void> {
     const project = await this.findOne(promoteurId, projectId);
-    await this.projectsRepository.remove(project);
+
+    await this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(Property).delete({ projectId: project.id });
+      await manager.getRepository(Project).remove(project);
+    });
   }
 }

@@ -160,22 +160,12 @@ export default function ProjectPage({ params }: ProjectPageProps) {
                     <p className="text-2xl font-bold text-gray-900">{project.totalUnits}</p>
                   </div>
                 )}
-                {project.availableUnits !== undefined && (
-                  <div className="bg-teal-50 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-1">Disponibles</p>
-                    <p className="text-2xl font-bold text-teal-600">{project.availableUnits}</p>
-                  </div>
-                )}
                 {project.deliveryDate && (
                   <div className="bg-gray-50 rounded-lg p-4">
                     <p className="text-sm text-gray-600 mb-1">Livraison</p>
                     <p className="text-lg font-bold text-gray-900">{project.deliveryDate}</p>
                   </div>
                 )}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600 mb-1">Appartements</p>
-                  <p className="text-2xl font-bold text-gray-900">{project.propertiesCount}</p>
-                </div>
               </div>
             </div>
 
