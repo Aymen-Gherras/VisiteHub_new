@@ -219,7 +219,11 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         {project.properties && project.properties.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {project.properties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
+              <PropertyCard
+                key={property.id}
+                property={property}
+                href={`/promoteurs/${promoteur.slug}/${project.slug}/${property.slug || property.id}`}
+              />
             ))}
           </div>
         ) : (
@@ -227,8 +231,6 @@ export default function ProjectPage({ params }: ProjectPageProps) {
             <p className="text-gray-600">Aucun appartement disponible pour le moment.</p>
           </div>
         )}
-
-        {/* property details are handled by the shared /properties/[slug] page via PropertyCard default href */}
       </div>
     </div>
   );

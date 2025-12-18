@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { use } from 'react';
 import Link from 'next/link';
+import { apiService, Agence, Property } from '@/api';
 import { PropertyHero } from '@/app/components/properties/PropertyHero';
 import { PropertyBasicInfo } from '@/app/components/properties/PropertyBasicInfo';
 import { PropertyDetails } from '@/app/components/properties/PropertyDetails';
@@ -10,148 +11,18 @@ import { PropertyGallery } from '@/app/components/properties/PropertyGallery';
 import { PropertyContactDetails } from '@/app/components/properties/PropertyContactDetails';
 import { PropertyReturnButton } from '@/app/components/properties/PropertyReturnButton';
 
-interface Property {
-  id: string;
-  title: string;
-  type: string;
-  price: string | number;
-  surface: number;
-  bedrooms?: number;
-  bathrooms?: number;
-  floor?: number;
-  description?: string;
-  images?: string[];
-  slug: string;
-  transactionType: 'vendre' | 'location';
-  iframe360Link?: string;
-  amenities?: string[];
-  nearbyPlaces?: Array<{ id: string; name: string; distance: string; icon: string; displayOrder: number; createdAt: string }>;
-  papers?: string[];
-  address?: string;
-  wilaya?: string;
-  daira?: string;
-  createdAt?: string;
-  phoneNumber?: string;
-  propertyOwnerType?: string;
-  propertyOwnerName?: string;
-}
-
-interface Agence {
-  id: string;
-  name: string;
-  slug: string;
-  phone?: string;
-  email?: string;
-  wilaya: string;
-  daira?: string;
-}
-
 interface PropertyPageProps {
   params: Promise<{ slug: string; propertySlug: string }>;
 }
 
-const getMockPropertyBySlug = (agenceSlug: string, propertySlug: string) => {
-  const data: Record<string, Record<string, { agence: Agence; property: Property }>> = {
-    'immobilier-excellence': {
-      'appartement-f3-vue-mer': {
-        agence: { 
-          id: '1', 
-          name: 'Immobilier Excellence', 
-          slug: 'immobilier-excellence', 
-          phone: '+213 550 11 22 33', 
-          email: 'contact@immobilier-excellence.dz',
-          wilaya: '16 - Alger',
-          daira: 'Alger Centre'
-        },
-        property: {
-          id: '1',
-          title: 'Appartement F3 Vue Mer',
-          type: 'apartment',
-          price: 15000000,
-          surface: 95,
-          bedrooms: 3,
-          bathrooms: 2,
-          floor: 5,
-          slug: 'appartement-f3-vue-mer',
-          transactionType: 'vendre',
-          description: 'Superbe appartement F3 de 95m² au 5ème étage avec une vue imprenable sur la mer. Cuisine équipée moderne, salle de bain rénovée, parquet au sol et double vitrage. Proche de toutes commodités.',
-          iframe360Link: '',
-          images: [
-            'https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg?auto=compress&cs=tinysrgb&w=800',
-            'https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=800',
-            'https://images.pexels.com/photos/2089698/pexels-photo-2089698.jpeg?auto=compress&cs=tinysrgb&w=800',
-            'https://images.pexels.com/photos/2724749/pexels-photo-2724749.jpeg?auto=compress&cs=tinysrgb&w=800'
-          ],
-          nearbyPlaces: [
-            { id: '1', name: 'Parking', distance: 'Dans le bâtiment', icon: '🅿️', displayOrder: 1, createdAt: new Date().toISOString() },
-            { id: '2', name: 'Ascenseur', distance: 'Inclus', icon: '🛗', displayOrder: 2, createdAt: new Date().toISOString() },
-            { id: '3', name: 'Balcon', distance: '8 m²', icon: '🪟', displayOrder: 3, createdAt: new Date().toISOString() },
-            { id: '4', name: 'Patisserie la rosa', distance: '100m', icon: '🍰', displayOrder: 4, createdAt: new Date().toISOString() },
-            { id: '5', name: 'Arret de bus', distance: '50m', icon: '🚌', displayOrder: 5, createdAt: new Date().toISOString() },
-            { id: '6', name: 'Pharmacie', distance: '200m', icon: '💊', displayOrder: 6, createdAt: new Date().toISOString() }
-          ],
-          amenities: ['Parking', 'Ascenseur', 'Balcon'],
-          papers: ['Acte de propriété', 'Livret foncier'],
-          address: '15 Rue Didouche Mourad, Alger Centre',
-          wilaya: '16 - Alger',
-          daira: 'Alger Centre',
-          createdAt: new Date().toISOString(),
-          phoneNumber: '+213 550 11 22 33',
-          propertyOwnerType: 'Agence immobilière',
-          propertyOwnerName: 'Immobilier Excellence'
-        }
-      },
-      'villa-moderne-hydra': {
-        agence: { 
-          id: '1', 
-          name: 'Immobilier Excellence', 
-          slug: 'immobilier-excellence', 
-          phone: '+213 550 11 22 33', 
-          email: 'contact@immobilier-excellence.dz',
-          wilaya: '16 - Alger',
-          daira: 'Alger Centre'
-        },
-        property: {
-          id: '2',
-          title: 'Villa Moderne Hydra',
-          type: 'villa',
-          price: 85000000,
-          surface: 350,
-          bedrooms: 5,
-          bathrooms: 3,
-          slug: 'villa-moderne-hydra',
-          transactionType: 'vendre',
-          description: 'Magnifique villa moderne de 350m² située dans le quartier huppé d\'Hydra. Architecture contemporaine avec piscine privée, jardin paysager de 200m², garage pour 2 véhicules et système de sécurité complet. Finitions luxueuses avec matériaux nobles.',
-          iframe360Link: '',
-          images: [
-            'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800',
-            'https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg?auto=compress&cs=tinysrgb&w=800',
-            'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800',
-            'https://images.pexels.com/photos/1648776/pexels-photo-1648776.jpeg?auto=compress&cs=tinysrgb&w=800'
-          ],
-          nearbyPlaces: [
-            { id: '1', name: 'Piscine', distance: 'Privée', icon: '🏊', displayOrder: 1, createdAt: new Date().toISOString() },
-            { id: '2', name: 'Jardin', distance: '200 m²', icon: '🌳', displayOrder: 2, createdAt: new Date().toISOString() },
-            { id: '3', name: 'Garage', distance: '2 places', icon: '🚗', displayOrder: 3, createdAt: new Date().toISOString() },
-            { id: '4', name: 'Sécurité 24/7', distance: 'Inclus', icon: '👮', displayOrder: 4, createdAt: new Date().toISOString() },
-            { id: '5', name: 'C.E.M Tripoli', distance: '300m', icon: '🏫', displayOrder: 5, createdAt: new Date().toISOString() },
-            { id: '6', name: 'Climatisation', distance: 'Toutes les pièces', icon: '❄️', displayOrder: 6, createdAt: new Date().toISOString() }
-          ],
-          amenities: ['Piscine', 'Jardin', 'Garage'],
-          papers: ['Acte de propriété', 'Livret foncier'],
-          address: 'Hydra, Alger',
-          wilaya: '16 - Alger',
-          daira: 'Hydra',
-          createdAt: new Date().toISOString(),
-          phoneNumber: '+213 550 11 22 33',
-          propertyOwnerType: 'Agence immobilière',
-          propertyOwnerName: 'Immobilier Excellence'
-        }
-      }
-    }
-  };
-  
-  return data[agenceSlug]?.[propertySlug] || null;
+const normalize = (value: string) => value.trim().toLowerCase();
+
+const fetchPropertyBySlugOrId = async (slugOrId: string): Promise<Property> => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const tailUuidMatch = slugOrId.match(/([0-9a-fA-F-]{36})$/);
+  if (uuidRegex.test(slugOrId)) return apiService.getProperty(slugOrId);
+  if (tailUuidMatch) return apiService.getProperty(tailUuidMatch[1]);
+  return apiService.getPropertyBySlug(slugOrId);
 };
 
 export default function PropertyPage({ params }: PropertyPageProps) {
@@ -166,14 +37,22 @@ export default function PropertyPage({ params }: PropertyPageProps) {
     const fetchProperty = async () => {
       try {
         setLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const data = getMockPropertyBySlug(agenceSlug, propertySlug);
-        if (!data) {
+        setError(null);
+
+        const agency = await apiService.getAgenceBySlug(agenceSlug);
+        const prop = await fetchPropertyBySlugOrId(propertySlug);
+
+        const isAgencyOwned =
+          prop.propertyOwnerType === 'Agence immobilière' &&
+          normalize(prop.propertyOwnerName || '') === normalize(agency.name || '');
+
+        if (!isAgencyOwned) {
           setError('Propriété non trouvée');
-        } else {
-          setProperty(data.property);
-          setAgence(data.agence);
+          return;
         }
+
+        setAgence(agency);
+        setProperty(prop);
       } catch (err) {
         console.error('Error fetching property:', err);
         setError('Propriété non trouvée');
@@ -213,15 +92,15 @@ export default function PropertyPage({ params }: PropertyPageProps) {
 
   const transformedProperty = {
     ...property,
-    city: property.daira,
-    features: property.nearbyPlaces?.map(p => p.name) || [],
+    city: (property as any).city,
+    features: property.amenities || [],
     nearbyPlaces: property.nearbyPlaces || [],
     papers: property.papers || [],
     serviceTier: 'premium_360' as const,
     has360Tour: !!property.iframe360Link,
     contactInfo: {
       name: property.propertyOwnerName || agence.name,
-      phone: property.phoneNumber || agence.phone || '+213 561 278 961',
+      phone: property.phoneNumber || agence.phoneNumber || '+213 561 278 961',
       email: agence.email || 'contact@visitehub.com',
       isAgency: property.propertyOwnerType === 'Agence immobilière',
     },
@@ -258,7 +137,7 @@ export default function PropertyPage({ params }: PropertyPageProps) {
           type={property.type as 'apartment' | 'house' | 'villa' | 'land' | 'commercial'}
           surface={property.surface}
           bedrooms={property.bedrooms}
-          etage={property.floor}
+          etage={(property as any).etage}
           rentPeriod={undefined}
           propertyOwnerType={property.propertyOwnerType}
           propertyOwnerName={property.propertyOwnerName}

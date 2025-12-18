@@ -213,7 +213,7 @@ export default function AgencePage({ params }: AgencePageProps) {
               <PropertyCard 
                 key={property.id} 
                 property={property as any} 
-                href={`/agences/${agence.slug}/${property.slug}`}
+                href={`/agences/${agence.slug}/${property.slug || property.id}`}
               />
             ))}
           </div>
