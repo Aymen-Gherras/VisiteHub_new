@@ -213,6 +213,9 @@ export interface PropertyFilters {
   maxSurface?: number;
   wilaya?: string;
   daira?: string;
+  propertyOwnerType?: string;
+  propertyOwnerName?: string;
+  projectId?: string;
   has360Tour?: boolean;
   isFeatured?: boolean;
   sortBy?: 'price_asc' | 'price_desc' | 'surface_asc' | 'surface_desc' | 'newest' | 'oldest' | 'most_viewed';
@@ -306,7 +309,7 @@ export interface CreateUserDto {
 }
 
 export interface PropertySearchParams {
-  type?: 'apartment' | 'house' | 'villa' | 'land';
+  type?: 'apartment' | 'house' | 'villa' | 'land' | 'commercial';
   transactionType?: 'vendre' | 'location';
   minPrice?: number;
   maxPrice?: number;
@@ -318,6 +321,9 @@ export interface PropertySearchParams {
   maxSurface?: number;
   wilaya?: string;
   daira?: string;
+  propertyOwnerType?: string;
+  propertyOwnerName?: string;
+  projectId?: string;
   has360Tour?: boolean;
   sortBy?: 'price_asc' | 'price_desc' | 'surface_asc' | 'surface_desc' | 'newest' | 'oldest' | 'most_viewed';
   limit?: number;

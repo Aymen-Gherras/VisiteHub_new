@@ -5,204 +5,61 @@ import { use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PropertyCard } from '@/app/components/ui/PropertyCard';
+import { apiService, Agence, Property } from '@/api';
 
-interface Property {
-  id: string;
-  title: string;
-  description?: string;
-  price: string | number;
-  address?: string;
-  wilaya: string;
-  daira?: string;
-  bedrooms?: number;
-  bathrooms?: number;
-  surface: number;
-  type: 'apartment' | 'house' | 'villa' | 'commercial' | 'land';
-  transactionType: 'vendre' | 'location';
-  images?: string[];
-  iframe360Link?: string;
-  slug: string;
-  amenities?: string[];
-  nearbyPlaces?: any[];
-  papers?: string[];
-  rentPeriod?: 'month' | 'day';
-  propertyOwnerType?: string;
-  propertyOwnerName?: string;
-  phoneNumber?: string;
-  createdAt?: string;
-}
-
-interface Agence {
-  id: string;
-  name: string;
-  slug: string;
-  wilaya: string;
-  daira?: string;
-  description?: string;
-  logo?: string;
-  coverImage?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  address?: string;
+type UiAgence = Agence & {
   properties?: Property[];
   propertiesCount: number;
   initials: string;
   bgColor: string;
-}
+  coverImage?: string;
+  phone?: string;
+};
 
 interface AgencePageProps {
   params: Promise<{ slug: string }>;
 }
 
-// Mock data - This will be replaced with API call from admin panel
-// TODO: Connect to backend API endpoint: GET /api/agences/:slug
-const getMockAgenceBySlug = (slug: string): Agence | null => {
-  const agences: Record<string, Agence> = {
-    'immobilier-excellence': {
-      id: '1',
-      name: 'Immobilier Excellence',
-      slug: 'immobilier-excellence',
-      wilaya: '16 - Alger',
-      daira: 'Alger Centre',
-      description: 'Votre agence de confiance pour trouver le bien immobilier qui vous correspond. Nous offrons un service personnalisé et professionnel.',
-      phone: '+213 550 11 22 33',
-      email: 'contact@immobilier-excellence.dz',
-      website: 'https://www.immobilier-excellence.dz',
-      address: '15 Rue Didouche Mourad, Alger Centre, Algérie',
-      propertiesCount: 45,
-      initials: 'IE',
-      bgColor: 'bg-blue-600',
-      properties: [
-        {
-          id: '1',
-          title: 'Appartement F3 Vue Mer',
-          description: 'Superbe F3 avec vue mer à Alger Centre',
-          price: 15000000,
-          address: '15 Rue Didouche Mourad, Alger Centre',
-          wilaya: '16 - Alger',
-          daira: 'Alger Centre',
-          bedrooms: 3,
-          bathrooms: 2,
-          surface: 95,
-          type: 'apartment',
-          transactionType: 'vendre',
-          slug: 'appartement-f3-vue-mer',
-          images: ['https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg?auto=compress&cs=tinysrgb&w=800'],
-          iframe360Link: '',
-          amenities: ['Parking', 'Ascenseur', 'Balcon'],
-          nearbyPlaces: [
-            { id: '1', name: 'Parking', distance: 'Dans le bâtiment', icon: '🅿️', displayOrder: 1, createdAt: new Date().toISOString() },
-            { id: '2', name: 'Ascenseur', distance: 'Inclus', icon: '🛗', displayOrder: 2, createdAt: new Date().toISOString() },
-            { id: '3', name: 'Balcon', distance: '8 m²', icon: '🪟', displayOrder: 3, createdAt: new Date().toISOString() },
-            { id: '4', name: 'Patisserie la rosa', distance: '100m', icon: '🍰', displayOrder: 4, createdAt: new Date().toISOString() },
-            { id: '5', name: 'Arret de bus', distance: '50m', icon: '🚌', displayOrder: 5, createdAt: new Date().toISOString() },
-            { id: '6', name: 'Pharmacie', distance: '200m', icon: '💊', displayOrder: 6, createdAt: new Date().toISOString() }
-          ],
-          papers: ['Acte de propriété', 'Livret foncier'],
-          propertyOwnerType: 'Agence immobilière',
-          propertyOwnerName: 'Immobilier Excellence',
-          phoneNumber: '+213 550 11 22 33',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: '2',
-          title: 'Villa Moderne Hydra',
-          description: 'Magnifique villa moderne à Hydra',
-          price: 85000000,
-          address: 'Hydra, Alger',
-          wilaya: '16 - Alger',
-          daira: 'Hydra',
-          bedrooms: 5,
-          bathrooms: 3,
-          surface: 350,
-          type: 'villa',
-          transactionType: 'vendre',
-          slug: 'villa-moderne-hydra',
-          images: ['https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=800'],
-          iframe360Link: '',
-          amenities: ['Piscine', 'Jardin', 'Garage'],
-          nearbyPlaces: [
-            { id: '1', name: 'Piscine', distance: 'Privée', icon: '🏊', displayOrder: 1, createdAt: new Date().toISOString() },
-            { id: '2', name: 'Jardin', distance: '200 m²', icon: '🌳', displayOrder: 2, createdAt: new Date().toISOString() },
-            { id: '3', name: 'Garage', distance: '2 places', icon: '🚗', displayOrder: 3, createdAt: new Date().toISOString() },
-            { id: '4', name: 'Sécurité 24/7', distance: 'Inclus', icon: '👮', displayOrder: 4, createdAt: new Date().toISOString() },
-            { id: '5', name: 'C.E.M Tripoli', distance: '300m', icon: '🏫', displayOrder: 5, createdAt: new Date().toISOString() },
-            { id: '6', name: 'Climatisation', distance: 'Toutes les pièces', icon: '❄️', displayOrder: 6, createdAt: new Date().toISOString() }
-          ],
-          papers: ['Acte de propriété', 'Livret foncier'],
-          propertyOwnerType: 'Agence immobilière',
-          propertyOwnerName: 'Immobilier Excellence',
-          phoneNumber: '+213 550 11 22 33',
-          createdAt: new Date().toISOString()
-        }
-      ]
-    },
-    'agence-du-patrimoine': {
-      id: '2',
-      name: 'Agence du Patrimoine',
-      slug: 'agence-du-patrimoine',
-      wilaya: '31 - Oran',
-      daira: 'Oran',
-      description: 'Spécialistes de l\'immobilier haut de gamme et des résidences de luxe. Une équipe d\'experts à votre service.',
-      phone: '+213 550 99 88 77',
-      email: 'contact@agence-patrimoine.dz',
-      website: 'https://www.agence-patrimoine.dz',
-      address: 'Boulevard de la République, Oran, Algérie',
-      propertiesCount: 32,
-      initials: 'AP',
-      bgColor: 'bg-purple-600',
-      properties: []
-    },
-    'immobiliere-constantine': {
-      id: '3',
-      name: 'Immobilière Constantine',
-      slug: 'immobiliere-constantine',
-      wilaya: '25 - Constantine',
-      daira: 'Constantine',
-      description: 'Des professionnels à votre écoute pour tous vos projets immobiliers. Expertise locale et connaissance du marché.',
-      phone: '+213 550 77 66 55',
-      email: 'contact@immobiliere-constantine.dz',
-      website: 'https://www.immobiliere-constantine.dz',
-      address: 'Centre-ville, Constantine, Algérie',
-      propertiesCount: 28,
-      initials: 'IC',
-      bgColor: 'bg-indigo-600',
-      properties: []
-    }
-  };
-  
-  return agences[slug] || null;
+const computeInitials = (name: string) =>
+  name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() || '')
+    .join('');
+
+const pickBgColor = (seed: string) => {
+  const palette = ['bg-blue-600', 'bg-purple-600', 'bg-indigo-600', 'bg-teal-600', 'bg-emerald-600', 'bg-slate-700'];
+  const hash = Array.from(seed).reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  return palette[hash % palette.length];
 };
 
 export default function AgencePage({ params }: AgencePageProps) {
   const { slug } = use(params);
-  const [agence, setAgence] = useState<Agence | null>(null);
+  const [agence, setAgence] = useState<UiAgence | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // TODO: Replace with actual API call once admin panel backend is ready
-  // Expected API endpoint: GET /api/agences/:slug
-  // This should return agence data managed from the admin panel
   useEffect(() => {
     const fetchAgence = async () => {
       try {
         setLoading(true);
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Get mock data by slug
-        const data = getMockAgenceBySlug(slug);
-        
-        if (!data) {
-          setError('Agence non trouvée');
-        } else {
-          setAgence(data);
-        }
-        
-        // TODO: Replace with actual API call:
-        // const data = await apiService.getAgenceBySlug(slug);
-        // setAgence(data);
+        const agency = await apiService.getAgenceBySlug(slug);
+        const { properties, total } = await apiService.getProperties({
+          propertyOwnerType: 'Agence immobilière',
+          propertyOwnerName: agency.name,
+          limit: 100,
+          offset: 0,
+        });
+
+        setAgence({
+          ...agency,
+          properties,
+          propertiesCount: total,
+          initials: computeInitials(agency.name),
+          bgColor: pickBgColor(agency.slug || agency.name),
+          phone: agency.phoneNumber,
+        });
       } catch (err) {
         console.error('Error fetching agence:', err);
         setError('Agence non trouvée');
@@ -212,8 +69,6 @@ export default function AgencePage({ params }: AgencePageProps) {
     };
     fetchAgence();
   }, [slug]);
-  //   fetchAgence();
-  // }, [slug]);
 
   if (loading) {
     return (

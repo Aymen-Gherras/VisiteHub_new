@@ -34,7 +34,7 @@ export default function PropertiesPage() {
     selectedWilaya: '',
     selectedDaira: '',
     selectedPropertyType: '',
-    selectedPropertyOwnerType: '',
+    selectedPropertyOwnerType: 'Particulier',
     selectedPaymentConditions: [],
     selectedSpecifications: [],
     selectedPapers: []
@@ -57,12 +57,15 @@ export default function PropertiesPage() {
               limit: ITEMS_PER_PAGE,
               offset: (page - 1) * ITEMS_PER_PAGE,
             };
+
+            // Public /properties page must ONLY show Particulier properties
+            params.propertyOwnerType = 'Particulier';
             
             if (filters.transactionType !== 'tous') params.transactionType = filters.transactionType;
             if (filters.selectedPropertyType) params.type = filters.selectedPropertyType;
             if (filters.selectedWilaya) params.wilaya = filters.selectedWilaya;
             if (filters.selectedDaira) params.daira = filters.selectedDaira;
-            if (filters.selectedPropertyOwnerType) params.propertyOwnerType = filters.selectedPropertyOwnerType;
+            // Ignore selectedPropertyOwnerType here; enforced above
             // Don't send searchQuery as a parameter to the API
             // Instead, we'll filter the results client-side after receiving them
             

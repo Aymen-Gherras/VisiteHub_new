@@ -4,159 +4,70 @@ import { useState, useEffect } from 'react';
 import { use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { apiService, Promoteur, Project } from '@/api';
 
-interface Project {
-  id: string;
-  name: string;
-  description?: string;
-  coverImage?: string;
+type UiProject = Project & {
+  slug: string;
   status: 'planning' | 'construction' | 'completed' | 'suspended';
-  slug: string;
-  wilaya?: string;
-  daira?: string;
   propertiesCount?: number;
-}
+};
 
-interface Promoteur {
-  id: string;
-  name: string;
-  slug: string;
+type UiPromoteur = Promoteur & {
   wilaya: string;
-  daira?: string;
-  description?: string;
-  logo?: string;
-  coverImage?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  address?: string;
-  projects?: Project[];
+  projects?: UiProject[];
   projectsCount: number;
   initials: string;
   bgColor: string;
-}
+  coverImage?: string;
+  phone?: string;
+};
 
 interface PromoteurPageProps {
   params: Promise<{ slug: string }>;
 }
 
-// Mock data - This will be replaced with API call from admin panel
-// TODO: Connect to backend API endpoint: GET /api/promoteurs/:slug
-const getMockPromoteurBySlug = (slug: string): Promoteur | null => {
-  const promoteurs: Record<string, Promoteur> = {
-    'bessa-promotion': {
-      id: '1',
-      name: 'Bessa Promotion',
-      slug: 'bessa-promotion',
-      wilaya: '16 - Alger',
-      daira: 'Alger',
-      description: 'Leader de la promotion immobilière, nous construisons l\'avenir avec des résidences haut de gamme.',
-      phone: '+213 550 11 22 33',
-      email: 'contact@bessa-promotion.dz',
-      website: 'https://www.bessa-promotion.dz',
-      address: 'Hydra, Alger, Algérie',
-      projectsCount: 12,
-      initials: 'BE',
-      bgColor: 'bg-gray-700',
-      projects: [
-        {
-          id: '1',
-          name: 'Résidence Les Jardins',
-          description: 'Complexe résidentiel de standing avec espaces verts.',
-          wilaya: '16 - Alger',
-          daira: 'Hydra',
-          status: 'completed',
-          slug: 'residence-les-jardins',
-          propertiesCount: 120
-        },
-        {
-          id: '2',
-          name: 'Bessa Park',
-          description: 'Résidence moderne avec toutes les commodités.',
-          wilaya: '16 - Alger',
-          daira: 'Ben Aknoun',
-          status: 'construction',
-          slug: 'bessa-park',
-          propertiesCount: 80
-        }
-      ]
-    },
-    'hasnaoui-immobilier': {
-      id: '2',
-      name: 'Hasnaoui Immobilier',
-      slug: 'hasnaoui-immobilier',
-      wilaya: '31 - Oran',
-      daira: 'Oran',
-      description: 'Une expertise reconnue dans la construction de cités intégrées et d\'espaces durables.',
-      phone: '+213 550 99 88 77',
-      email: 'info@groupe-hasnaoui.com',
-      website: 'https://www.groupe-hasnaoui.com',
-      address: 'Rue de la République, Oran, Algérie',
-      projectsCount: 8,
-      initials: 'HA',
-      bgColor: 'bg-teal-500',
-      projects: [
-        {
-          id: '1',
-          name: 'Cité El Ryad',
-          description: 'Un complexe résidentiel et commercial avec toutes les commodités.',
-          wilaya: '31 - Oran',
-          daira: 'Bir El Djir',
-          status: 'construction',
-          slug: 'cite-el-ryad',
-          propertiesCount: 250
-        }
-      ]
-    },
-    'goumid-promotion': {
-      id: '3',
-      name: 'Goumid Promotion',
-      slug: 'goumid-promotion',
-      wilaya: '25 - Constantine',
-      daira: 'Constantine',
-      description: 'Votre partenaire de confiance pour des logements de qualité supérieure au cœur de la ville.',
-      phone: '+213 550 77 66 55',
-      email: 'contact@goumid-promotion.dz',
-      website: 'https://www.goumid-promotion.dz',
-      address: 'Centre-ville, Constantine, Algérie',
-      projectsCount: 5,
-      initials: 'GO',
-      bgColor: 'bg-gray-700',
-      projects: []
-    }
-  };
-  
-  return promoteurs[slug] || null;
+const computeInitials = (name: string) =>
+  name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() || '')
+    .join('');
+
+const pickBgColor = (seed: string) => {
+  const palette = ['bg-gray-700', 'bg-teal-600', 'bg-emerald-600', 'bg-slate-700', 'bg-indigo-700'];
+  const hash = Array.from(seed).reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  return palette[hash % palette.length];
 };
 
 export default function PromoteurPage({ params }: PromoteurPageProps) {
   const { slug } = use(params);
-  const [promoteur, setPromoteur] = useState<Promoteur | null>(null);
+  const [promoteur, setPromoteur] = useState<UiPromoteur | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // TODO: Replace with actual API call once admin panel backend is ready
-  // Expected API endpoint: GET /api/promoteurs/:slug
-  // This should return promoteur data managed from the admin panel
   useEffect(() => {
     const fetchPromoteur = async () => {
       try {
         setLoading(true);
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Get mock data by slug
-        const data = getMockPromoteurBySlug(slug);
-        
-        if (!data) {
-          setError('Promoteur non trouvé');
-        } else {
-          setPromoteur(data);
-        }
-        
-        // TODO: Replace with actual API call:
-        // const data = await apiService.getPromoteurBySlug(slug);
-        // setPromoteur(data);
+        const p = await apiService.getPromoteurBySlug(slug);
+        const projects = await apiService.listPromoteurProjects(p.id);
+
+        const uiProjects: UiProject[] = projects.map((proj) => ({
+          ...proj,
+          slug: proj.slug || proj.id,
+          status: (proj.status || 'planning') as UiProject['status'],
+        }));
+
+        setPromoteur({
+          ...p,
+          wilaya: p.wilaya || '',
+          projects: uiProjects,
+          projectsCount: uiProjects.length,
+          initials: computeInitials(p.name),
+          bgColor: pickBgColor(p.slug || p.name),
+          phone: p.phoneNumber,
+        });
       } catch (err) {
         console.error('Error fetching promoteur:', err);
         setError('Promoteur non trouvé');

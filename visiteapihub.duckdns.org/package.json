@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "rm -f tsconfig.build.tsbuildinfo && tsc -p tsconfig.build.json && cp -r src/locations/data dist/locations/ 2>/dev/null || true",
+    "build": "rimraf tsconfig.build.tsbuildinfo && tsc -p tsconfig.build.json && shx mkdir -p dist/locations && shx cp -r src/locations/data dist/locations/ || shx echo 'skip locations data copy'",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -75,6 +75,8 @@
     "globals": "^16.0.0",
     "jest": "^30.0.0",
     "prettier": "^3.4.2",
+    "rimraf": "^6.1.2",
+    "shx": "^0.4.0",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",

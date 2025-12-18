@@ -17,10 +17,7 @@ const propertyTypeLabels: Record<string, string> = {
 };
 
 const ownerTypes = [
-  { value: '', label: 'Tous les propriétaires' },
   { value: 'Particulier', label: 'Particulier' },
-  { value: 'Agence immobilière', label: 'Agence immobilière' },
-  { value: 'Promotion immobilière', label: 'Promotion immobilière' }
 ];
 
 interface FilterState {
@@ -56,7 +53,7 @@ export const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
   const [dairaOpen, setDairaOpen] = useState(false);
   const [wilayaQuery, setWilayaQuery] = useState('');
   const [dairaQuery, setDairaQuery] = useState('');
-
+  
   const wilayaBtnRef = useRef<HTMLButtonElement | null>(null);
   const dairaBtnRef = useRef<HTMLButtonElement | null>(null);
 

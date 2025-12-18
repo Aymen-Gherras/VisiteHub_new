@@ -4,85 +4,33 @@ import { useState, useEffect } from 'react';
 import { use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { apiService, Project, Promoteur, Property } from '@/api';
+import { PropertyCard } from '@/app/components/ui/PropertyCard';
 
-interface Property {
-  id: string;
-  title: string;
-  type: string;
-  price: string;
-  surface: number;
-  bedrooms?: number;
-  bathrooms?: number;
-  images?: string[];
+type UiProject = Project & {
   slug: string;
-  transactionType: 'vendre' | 'location';
-}
-
-interface Project {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  wilaya: string;
-  daira: string;
-  address?: string;
   status: 'completed' | 'construction' | 'planning' | 'suspended';
-  coverImage?: string;
-  gallery?: string[];
   propertiesCount: number;
+  properties?: Property[];
+  amenities?: string[];
+  gallery?: string[];
   deliveryDate?: string;
   totalUnits?: number;
   availableUnits?: number;
-  amenities?: string[];
-  properties?: Property[];
-}
+};
 
-interface Promoteur {
-  id: string;
-  name: string;
-  slug: string;
-  phone?: string;
-}
+type UiPromoteur = Promoteur & { phone?: string };
 
 interface ProjectPageProps {
   params: Promise<{ slug: string; projectSlug: string }>;
 }
 
-const getMockProjectBySlug = (promoteurSlug: string, projectSlug: string): { project: Project; promoteur: Promoteur } | null => {
-  const data: Record<string, Record<string, { project: Project; promoteur: Promoteur }>> = {
-    'bessa-promotion': {
-      'residence-les-jardins': {
-        promoteur: { id: '1', name: 'Bessa Promotion', slug: 'bessa-promotion', phone: '+213 550 11 22 33' },
-        project: {
-          id: '1',
-          name: 'Résidence Les Jardins',
-          slug: 'residence-les-jardins',
-          description: 'Complexe résidentiel de standing avec espaces verts aménagés, aires de jeux pour enfants, et commerces de proximité.',
-          wilaya: '16 - Alger',
-          daira: 'Hydra',
-          address: 'Route de la Forêt, Hydra, Alger',
-          status: 'completed',
-          propertiesCount: 120,
-          deliveryDate: 'Juin 2024',
-          totalUnits: 120,
-          availableUnits: 5,
-          amenities: ['Parking souterrain', 'Espaces verts', 'Aire de jeux', 'Commerces', 'Sécurité 24/7', 'Ascenseur', 'Interphone'],
-          properties: [
-            { id: '1', title: 'Appartement F3 avec balcon', type: 'F3', price: '18,500,000 DZD', surface: 85, bedrooms: 3, bathrooms: 2, slug: 'appartement-f3-balcon', transactionType: 'vendre' },
-            { id: '2', title: 'Appartement F4 vue jardin', type: 'F4', price: '24,000,000 DZD', surface: 110, bedrooms: 4, bathrooms: 2, slug: 'appartement-f4-vue-jardin', transactionType: 'vendre' }
-          ]
-        }
-      }
-    }
-  };
-  
-  return data[promoteurSlug]?.[projectSlug] || null;
-};
+const normalize = (value: string) => value.trim().toLowerCase();
 
 export default function ProjectPage({ params }: ProjectPageProps) {
   const { slug: promoteurSlug, projectSlug } = use(params);
-  const [project, setProject] = useState<Project | null>(null);
-  const [promoteur, setPromoteur] = useState<Promoteur | null>(null);
+  const [project, setProject] = useState<UiProject | null>(null);
+  const [promoteur, setPromoteur] = useState<UiPromoteur | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -90,14 +38,32 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     const fetchProject = async () => {
       try {
         setLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const data = getMockProjectBySlug(promoteurSlug, projectSlug);
-        if (!data) {
+        const p = await apiService.getPromoteurBySlug(promoteurSlug);
+        const projects = await apiService.listPromoteurProjects(p.id);
+        const found = projects.find((proj) => {
+          const slugOrId = proj.slug || proj.id;
+          return normalize(slugOrId) === normalize(projectSlug) || normalize(proj.id) === normalize(projectSlug);
+        });
+        if (!found) {
           setError('Projet non trouvé');
-        } else {
-          setProject(data.project);
-          setPromoteur(data.promoteur);
+          return;
         }
+
+        const { properties, total } = await apiService.getProperties({
+          propertyOwnerType: 'Promotion immobilière',
+          projectId: found.id,
+          limit: 100,
+          offset: 0,
+        });
+
+        setPromoteur({ ...p, phone: p.phoneNumber });
+        setProject({
+          ...found,
+          slug: found.slug || found.id,
+          status: (found.status || 'planning') as UiProject['status'],
+          propertiesCount: total,
+          properties,
+        });
       } catch (err) {
         console.error('Error fetching project:', err);
         setError('Projet non trouvé');
@@ -233,9 +199,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {project.amenities.map((amenity, index) => (
                 <div key={index} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0">
-                    <span className="text-teal-600"></span>
-                  </div>
+                  <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0"></div>
                   <span className="text-gray-700">{amenity}</span>
                 </div>
               ))}
@@ -255,118 +219,16 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         {project.properties && project.properties.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {project.properties.map((property) => (
-              <div key={property.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 group">
-                {/* Property Image */}
-                <div className="relative overflow-hidden h-64">
-                  {property.images && property.images.length > 0 ? (
-                    <Image
-                      src={property.images[0]}
-                      alt={property.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                  ) : (
-                    <Image
-                      src="https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg?auto=compress&cs=tinysrgb&w=800"
-                      alt={property.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                  )}
-                  <div className="absolute top-4 left-4 flex gap-2">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      property.transactionType === 'vendre'
-                        ? 'bg-slate-700 text-white'
-                        : 'bg-orange-500 text-white'
-                    }`}>
-                      {property.transactionType === 'vendre' ? 'Vente' : 'Location'}
-                    </span>
-                  </div>
-
-                  <Link
-                    href={`/promoteurs/${promoteur.slug}/${project.slug}/${property.slug}`}
-                    className="absolute bottom-4 right-4 bg-emerald-500 text-white px-3 py-2 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
-                  >
-                    Visite 360°
-                  </Link>
-                </div>
-
-                {/* Property Details */}
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <Link
-                      href={`/promoteurs/${promoteur.slug}/${project.slug}/${property.slug}`}
-                      className="text-xl font-bold text-slate-800 group-hover:text-emerald-600 transition-colors line-clamp-1"
-                    >
-                      {property.title}
-                    </Link>
-                  </div>
-
-                  <div className="flex items-center text-gray-600 mb-3">
-                    <i className="fas fa-map-marker-alt mr-1 text-emerald-500"></i>
-                    <span className="text-sm">{project.daira}, {project.wilaya}</span>
-                  </div>
-
-                  <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
-                    <div className="flex items-center">
-                      <i className="fas fa-ruler-combined mr-1 text-emerald-500"></i>
-                      {property.surface}m²
-                    </div>
-                    <div className="flex items-center">
-                      <span className="font-medium">{property.type}</span>
-                    </div>
-                  </div>
-
-                  {project.amenities && project.amenities.length > 0 && (
-                    <div className="mb-4">
-                      <div className="relative flex flex-wrap gap-2 max-h-14 overflow-hidden">
-                        {project.amenities.slice(0, 3).map((amenity, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center gap-1 px-2 py-1 rounded-full text-xs max-w-[160px] truncate"
-                            title={amenity}
-                          >
-                            <div className="flex h-5 w-5 items-center justify-center shrink-0">
-                              <span className="text-sm">📍</span>
-                            </div>
-                            <span className="text-gray-700 truncate">{amenity}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <span className="text-2xl font-bold text-emerald-600">{property.price}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Link
-                      href={`/promoteurs/${promoteur.slug}/${project.slug}/${property.slug}`}
-                      className="flex-1 bg-emerald-500 text-white py-2 px-4 rounded-lg hover:bg-emerald-600 transition-colors text-center text-sm font-medium"
-                    >
-                      Voir détails
-                    </Link>
-                    <a
-                      href={`tel:${promoteur.phone || '+213556267621'}`}
-                      className="flex items-center justify-center bg-slate-700 text-white py-2 px-4 rounded-lg hover:bg-slate-800 transition-colors"
-                    >
-                      <i className="fas fa-phone"></i>
-                    </a>
-                  </div>
-                </div>
-              </div>
+              <PropertyCard key={property.id} property={property} />
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 bg-white rounded-xl">
+          <div className="bg-white rounded-xl shadow-md p-8 text-center">
             <p className="text-gray-600">Aucun appartement disponible pour le moment.</p>
           </div>
         )}
+
+        {/* property details are handled by the shared /properties/[slug] page via PropertyCard default href */}
       </div>
     </div>
   );

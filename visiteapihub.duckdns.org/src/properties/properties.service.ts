@@ -688,6 +688,18 @@ export class PropertiesService {
         queryBuilder.andWhere('property.propertyOwnerType = :propertyOwnerType', { propertyOwnerType: filters.propertyOwnerType });
       }
 
+      // Property owner name filter (agency/promotion company name)
+      if ((filters as any).propertyOwnerName) {
+        queryBuilder.andWhere('property.propertyOwnerName = :propertyOwnerName', {
+          propertyOwnerName: (filters as any).propertyOwnerName,
+        });
+      }
+
+      // Project filter (promotion project)
+      if ((filters as any).projectId) {
+        queryBuilder.andWhere('property.projectId = :projectId', { projectId: (filters as any).projectId });
+      }
+
       // 360° Tour filter
       if (filters.has360Tour !== undefined) {
         if (filters.has360Tour) {

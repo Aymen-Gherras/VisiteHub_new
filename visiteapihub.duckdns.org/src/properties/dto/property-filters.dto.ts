@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsNumber, IsBoolean, IsEnum, IsInt, Min, Max } from 'class-validator';
+import { IsOptional, IsString, IsNumber, IsBoolean, IsEnum, IsInt, Min, Max, IsUUID } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { PropertyType, TransactionType } from '../entities/property.entity';
 
@@ -77,6 +77,15 @@ export class PropertyFiltersDto {
   @IsString()
   @Transform(({ value }) => value?.trim())
   propertyOwnerType?: string; // 'Particulier', 'Agence immobilière', 'Promotion immobilière'
+
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => value?.trim())
+  propertyOwnerName?: string;
+
+  @IsOptional()
+  @IsUUID()
+  projectId?: string;
 
   @IsOptional()
   @Transform(({ value }) => {
