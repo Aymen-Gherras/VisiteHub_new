@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { apiService } from '../../../../../api';
+import { apiService, CreateProjectDto, Project, UpdateProjectDto } from '../../../../../api';
 import { useAuth } from '../../../../../context/AuthContext';
 
 export default function EditPromoteur() {
@@ -16,6 +16,24 @@ export default function EditPromoteur() {
   const [error, setError] = useState<string | null>(null);
   const [wilayas, setWilayas] = useState<string[]>([]);
   const [dairas, setDairas] = useState<string[]>([]);
+
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(false);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [projectSaving, setProjectSaving] = useState(false);
+  const [editProjectData, setEditProjectData] = useState<UpdateProjectDto>({});
+  const [editProjectDairas, setEditProjectDairas] = useState<string[]>([]);
+
+  const [newProjectData, setNewProjectData] = useState<CreateProjectDto>({
+    name: '',
+    slug: '',
+    description: '',
+    wilaya: '',
+    daira: '',
+    address: '',
+  });
+  const [newProjectDairas, setNewProjectDairas] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -60,6 +78,25 @@ export default function EditPromoteur() {
     fetchPromoteur();
   }, [promoteurId]);
 
+  // Fetch projects for this promoteur
+  useEffect(() => {
+    const fetchProjects = async () => {
+      if (!promoteurId) return;
+      try {
+        setProjectsLoading(true);
+        setProjectsError(null);
+        const list = await apiService.listPromoteurProjects(promoteurId);
+        setProjects(list);
+      } catch (err) {
+        console.error('Error fetching promoteur projects:', err);
+        setProjectsError(err instanceof Error ? err.message : 'Failed to fetch projects');
+      } finally {
+        setProjectsLoading(false);
+      }
+    };
+    fetchProjects();
+  }, [promoteurId]);
+
   // Fetch wilayas on mount
   useEffect(() => {
     const fetchWilayas = async () => {
@@ -91,9 +128,188 @@ export default function EditPromoteur() {
     fetchDairas();
   }, [formData.wilaya]);
 
+  // Fetch dairas for new project when project wilaya changes
+  useEffect(() => {
+    const fetchProjectDairas = async () => {
+      if (!newProjectData.wilaya) {
+        setNewProjectDairas([]);
+        return;
+      }
+      try {
+        const data = await apiService.listDairas(newProjectData.wilaya);
+        setNewProjectDairas(data);
+      } catch (err) {
+        console.error('Error fetching project dairas:', err);
+        setNewProjectDairas([]);
+      }
+    };
+    fetchProjectDairas();
+  }, [newProjectData.wilaya]);
+
+  // Fetch dairas for edit project when editProjectData.wilaya changes
+  useEffect(() => {
+    const fetchEditProjectDairas = async () => {
+      const wilaya = (editProjectData as any).wilaya as string | undefined;
+      if (!wilaya) {
+        setEditProjectDairas([]);
+        return;
+      }
+      try {
+        const data = await apiService.listDairas(wilaya);
+        setEditProjectDairas(data);
+      } catch (err) {
+        console.error('Error fetching edit project dairas:', err);
+        setEditProjectDairas([]);
+      }
+    };
+    fetchEditProjectDairas();
+  }, [(editProjectData as any).wilaya]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleNewProjectChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setNewProjectData((prev) => {
+      const next = { ...prev, [name]: value };
+      if (name === 'wilaya') {
+        next.daira = '';
+      }
+      return next;
+    });
+  };
+
+  const handleEditProjectChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setEditProjectData((prev) => {
+      const next: any = { ...prev, [name]: value };
+      if (name === 'wilaya') {
+        next.daira = '';
+      }
+      return next;
+    });
+  };
+
+  const refreshProjects = async () => {
+    if (!promoteurId) return;
+    const list = await apiService.listPromoteurProjects(promoteurId);
+    setProjects(list);
+  };
+
+  const startEditProject = (project: Project) => {
+    setProjectsError(null);
+    setEditingProjectId(project.id);
+    setEditProjectData({
+      name: project.name || '',
+      slug: project.slug || '',
+      description: project.description || '',
+      wilaya: project.wilaya || '',
+      daira: project.daira || '',
+      address: project.address || '',
+      floorsCount: project.floorsCount,
+      unitsPerFloor: project.unitsPerFloor,
+    });
+  };
+
+  const cancelEditProject = () => {
+    setEditingProjectId(null);
+    setEditProjectData({});
+    setEditProjectDairas([]);
+  };
+
+  const submitEditProject = async (projectId: string) => {
+    if (!token) {
+      alert('Authentication required. Please log in.');
+      return;
+    }
+    if (!promoteurId) {
+      setProjectsError('Promoteur ID is missing');
+      return;
+    }
+    setProjectSaving(true);
+    setProjectsError(null);
+    try {
+      await apiService.updatePromoteurProject(promoteurId, projectId, editProjectData, token);
+      await refreshProjects();
+      cancelEditProject();
+    } catch (err) {
+      console.error('Error updating project:', err);
+      setProjectsError(err instanceof Error ? err.message : 'Failed to update project');
+    } finally {
+      setProjectSaving(false);
+    }
+  };
+
+  const submitNewProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token) {
+      alert('Authentication required. Please log in.');
+      return;
+    }
+    if (!promoteurId) {
+      setProjectsError('Promoteur ID is missing');
+      return;
+    }
+    if (!newProjectData.name?.trim()) {
+      setProjectsError('Project name is required');
+      return;
+    }
+    setProjectSaving(true);
+    setProjectsError(null);
+    try {
+      const payload: CreateProjectDto = {
+        ...newProjectData,
+        name: newProjectData.name.trim(),
+        slug: newProjectData.slug?.trim() || undefined,
+        description: newProjectData.description?.trim() || undefined,
+        wilaya: newProjectData.wilaya || undefined,
+        daira: newProjectData.daira || undefined,
+        address: newProjectData.address?.trim() || undefined,
+      };
+      await apiService.createPromoteurProject(promoteurId, payload, token);
+      await refreshProjects();
+      setNewProjectData({
+        name: '',
+        slug: '',
+        description: '',
+        wilaya: '',
+        daira: '',
+        address: '',
+      });
+      setNewProjectDairas([]);
+    } catch (err) {
+      console.error('Error creating project:', err);
+      setProjectsError(err instanceof Error ? err.message : 'Failed to create project');
+    } finally {
+      setProjectSaving(false);
+    }
+  };
+
+  const deleteProject = async (project: Project) => {
+    if (!token) {
+      alert('Authentication required. Please log in.');
+      return;
+    }
+    if (!promoteurId) {
+      setProjectsError('Promoteur ID is missing');
+      return;
+    }
+    const ok = window.confirm(`Delete project "${project.name}"?`);
+    if (!ok) return;
+    setProjectSaving(true);
+    setProjectsError(null);
+    try {
+      await apiService.deletePromoteurProject(promoteurId, project.id, token);
+      await refreshProjects();
+      if (editingProjectId === project.id) cancelEditProject();
+    } catch (err) {
+      console.error('Error deleting project:', err);
+      setProjectsError(err instanceof Error ? err.message : 'Failed to delete project');
+    } finally {
+      setProjectSaving(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -170,7 +386,7 @@ export default function EditPromoteur() {
           </div>
         )}
 
-        {/* Form */}
+        {/* Promoteur Form */}
         <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="space-y-6">
             {/* Name */}
@@ -375,6 +591,262 @@ export default function EditPromoteur() {
             </button>
           </div>
         </form>
+
+        {/* Projects Section */}
+        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Projects</h2>
+              <p className="mt-1 text-sm text-gray-600">Manage projects for this promoteur</p>
+            </div>
+          </div>
+
+          {projectsError && (
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-700">
+              {projectsError}
+            </div>
+          )}
+
+          {projectsLoading ? (
+            <div className="py-6 text-center text-gray-600">Loading projects...</div>
+          ) : projects.length === 0 ? (
+            <div className="py-6 text-center text-gray-600">No projects found for this promoteur.</div>
+          ) : (
+            <div className="space-y-4 mb-6">
+              {projects.map((project) => (
+                <div key={project.id} className="border border-gray-200 rounded-lg p-4">
+                  {editingProjectId === project.id ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                          <input
+                            type="text"
+                            name="name"
+                            value={(editProjectData as any).name || ''}
+                            onChange={handleEditProjectChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                          <input
+                            type="text"
+                            name="slug"
+                            value={(editProjectData as any).slug || ''}
+                            onChange={handleEditProjectChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="optional"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea
+                          name="description"
+                          value={(editProjectData as any).description || ''}
+                          onChange={handleEditProjectChange}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Wilaya</label>
+                          <select
+                            name="wilaya"
+                            value={(editProjectData as any).wilaya || ''}
+                            onChange={handleEditProjectChange}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          >
+                            <option value="">Select wilaya</option>
+                            {wilayas.map((w) => (
+                              <option key={w} value={w}>{w}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Daira</label>
+                          <select
+                            name="daira"
+                            value={(editProjectData as any).daira || ''}
+                            onChange={handleEditProjectChange}
+                            disabled={!(editProjectData as any).wilaya || editProjectDairas.length === 0}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                          >
+                            <option value="">Select daira</option>
+                            {editProjectDairas.map((d) => (
+                              <option key={d} value={d}>{d}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                        <input
+                          type="text"
+                          name="address"
+                          value={(editProjectData as any).address || ''}
+                          onChange={handleEditProjectChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-end gap-3">
+                        <button
+                          type="button"
+                          onClick={cancelEditProject}
+                          className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                          disabled={projectSaving}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => submitEditProject(project.id)}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                          disabled={projectSaving}
+                        >
+                          {projectSaving ? 'Saving...' : 'Save'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="font-semibold text-gray-900">{project.name}</div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          {(project.daira || project.wilaya) ? `${project.daira || ''}${project.daira && project.wilaya ? ', ' : ''}${project.wilaya || ''}` : 'No location'}
+                        </div>
+                        {project.slug && (
+                          <div className="text-xs text-gray-500 mt-1">Slug: {project.slug}</div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => startEditProject(project)}
+                          className="px-3 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                          disabled={projectSaving}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteProject(project)}
+                          className="px-3 py-2 text-red-700 bg-white border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
+                          disabled={projectSaving}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="border-t border-gray-200 pt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add new project</h3>
+            <form onSubmit={submitNewProject} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={newProjectData.name}
+                    onChange={handleNewProjectChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="e.g. Résidence El Bahia"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                  <input
+                    type="text"
+                    name="slug"
+                    value={newProjectData.slug || ''}
+                    onChange={handleNewProjectChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="optional"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  name="description"
+                  value={newProjectData.description || ''}
+                  onChange={handleNewProjectChange}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Wilaya</label>
+                  <select
+                    name="wilaya"
+                    value={newProjectData.wilaya || ''}
+                    onChange={handleNewProjectChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select wilaya</option>
+                    {wilayas.map((w) => (
+                      <option key={w} value={w}>{w}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Daira</label>
+                  <select
+                    name="daira"
+                    value={newProjectData.daira || ''}
+                    onChange={handleNewProjectChange}
+                    disabled={!newProjectData.wilaya || newProjectDairas.length === 0}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                  >
+                    <option value="">Select daira</option>
+                    {newProjectDairas.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <input
+                  type="text"
+                  name="address"
+                  value={newProjectData.address || ''}
+                  onChange={handleNewProjectChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="flex items-center justify-end">
+                <button
+                  type="submit"
+                  disabled={projectSaving}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {projectSaving ? 'Saving...' : 'Add Project'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   );
