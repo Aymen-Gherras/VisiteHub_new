@@ -59,11 +59,11 @@ export default function FinancingSection({
       const priceValue = propertyData.price;
       console.log('🔍 FinancingSection - Price before sending:', priceValue, 'Type:', typeof priceValue);
       
-      // Add imageUrls to the payload if images exist
+      // Add imageUrls to the payload when images were set (even empty array) so edits can clear images.
       const payload = {
         ...propertyDataForBackend,
         price: typeof priceValue === 'string' ? priceValue : String(priceValue || ''),
-        ...(images && images.length > 0 && { imageUrls: images }),
+        ...(Array.isArray(images) && { imageUrls: images }),
         ...(propertyData.papers && propertyData.papers.length > 0 && { papers: propertyData.papers }),
       } as any;
       

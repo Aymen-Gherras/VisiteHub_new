@@ -560,20 +560,22 @@ export class PropertiesService {
       await this.propertiesRepository.save(updatedProperty);
     }
 
-    // Handle image URLs if provided
-    if (imageUrls && imageUrls.length > 0) {
+    // Handle image URLs if provided (even an empty array should clear images)
+    if (Array.isArray(imageUrls)) {
       // Delete existing images
       await this.propertyImageRepository.delete({ property: { id } });
 
-      // Create new PropertyImage entities
-      const propertyImages = imageUrls.map(imageUrl =>
-        this.propertyImageRepository.create({
-          imageUrl,
-          property: updatedProperty,
-        })
-      );
+      // Create new PropertyImage entities (if any)
+      if (imageUrls.length > 0) {
+        const propertyImages = imageUrls.map(imageUrl =>
+          this.propertyImageRepository.create({
+            imageUrl,
+            property: updatedProperty,
+          })
+        );
 
-      await this.propertyImageRepository.save(propertyImages);
+        await this.propertyImageRepository.save(propertyImages);
+      }
     }
 
     // Return the updated property with images (transformed)

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Property } from '../../../../../api';
 import { apiService } from '../../../../../api';
 import { useAuth } from '../../../../../context/AuthContext';
@@ -34,6 +34,24 @@ export default function ImagesSection({ propertyData, setPropertyData, onNext, o
   const [iframe360Link, setIframe360Link] = useState(propertyData.iframe360Link || '');
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Keep parent state in sync so changing tabs (without clicking Next) still persists.
+  useEffect(() => {
+    const imageUrls = images.filter(img => !img.isUploading).map(img => img.url);
+    setPropertyData({
+      ...propertyData,
+      images: imageUrls,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images]);
+
+  useEffect(() => {
+    setPropertyData({
+      ...propertyData,
+      iframe360Link,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [iframe360Link]);
 
   const uploadImage = async (file: File): Promise<string> => {
     const response = await apiService.uploadImage(file, token ?? undefined);
@@ -130,12 +148,6 @@ export default function ImagesSection({ propertyData, setPropertyData, onNext, o
   };
 
   const handleNext = () => {
-    const imageUrls = images.filter(img => !img.isUploading).map(img => img.url);
-    setPropertyData({
-      ...propertyData,
-      images: imageUrls,
-      iframe360Link: iframe360Link
-    });
     onNext();
   };
 
