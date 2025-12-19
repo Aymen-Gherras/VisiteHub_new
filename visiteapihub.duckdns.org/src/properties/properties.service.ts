@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -970,9 +970,12 @@ export class PropertiesService {
     const settings = await this.settingsRepository.findOne({ where: {} });
     const max = settings?.maxFeatured ?? 6;
     const count = await this.featuredRepository.count();
-    if (count >= max) throw new NotFoundException('Maximum featured reached');
+    if (count >= max) throw new BadRequestException('Maximum featured reached');
     const next = count + 1;
     await this.featuredRepository.save(this.featuredRepository.create({ propertyId, position: next }));
+
+    // Keep properties.isFeatured in sync for admin list/filter convenience
+    await this.propertiesRepository.update({ id: propertyId }, { isFeatured: true } as any);
     // Invalidate cache
     await this.invalidatePropertyCache(propertyId);
     return { success: true };
@@ -993,6 +996,9 @@ export class PropertiesService {
     }
     // Invalidate cache
     await this.invalidatePropertyCache(propertyId);
+
+    // Keep properties.isFeatured in sync
+    await this.propertiesRepository.update({ id: propertyId }, { isFeatured: false } as any);
     return { success: true };
   }
 
@@ -1036,7 +1042,7 @@ export class PropertiesService {
       .replace(/^-+|-+$/g, '');
   }
 
-  /** Toggle featured with a cap of 6 */
+  /** Toggle featured membership in the ordered featured set (respects settings.maxFeatured). */
   async toggleFeatured(id: string): Promise<TransformedProperty> {
     // Try with nearbyPlaces first, fall back without it if table doesn't exist
     let property: Property | null;
@@ -1058,32 +1064,43 @@ export class PropertiesService {
     if (!property) {
       throw new NotFoundException(`Property with ID ${id} not found`);
     }
-    if (!property.isFeatured) {
-      const count = await this.propertiesRepository.count({ where: { isFeatured: true } });
-      if (count >= 6) {
-        throw new Error('Maximum of 6 featured properties allowed');
+
+    // Decide based on membership in featured_properties (single source of truth)
+    const existingLink = await this.featuredRepository.findOne({ where: { propertyId: id } });
+
+    if (existingLink) {
+      // Unfeature: remove from featured set + compact positions
+      await this.removeFeatured(id);
+      await this.propertiesRepository.update({ id }, { isFeatured: false } as any);
+    } else {
+      // Feature: add to featured set (cap by settings.maxFeatured)
+      const settings = await this.settingsRepository.findOne({ where: {} });
+      const max = settings?.maxFeatured ?? 6;
+      const count = await this.featuredRepository.count();
+      if (count >= max) {
+        throw new BadRequestException(`Maximum of ${max} featured properties allowed`);
       }
+      await this.featuredRepository.save(this.featuredRepository.create({ propertyId: id, position: count + 1 }));
+      await this.propertiesRepository.update({ id }, { isFeatured: true } as any);
     }
-    property.isFeatured = !property.isFeatured;
-    const saved = await this.propertiesRepository.save(property);
+
+    // Reload property after updates
+    const saved = await this.propertiesRepository.findOne({ where: { id }, relations: ['images', 'amenities', 'papers', 'nearbyPlaces'] }).catch(async (error: any) => {
+      if (this.isNearbyPlacesError(error)) {
+        console.log('⚠️ nearby_places related error detected, retrying query without it');
+        return this.propertiesRepository.findOne({ where: { id }, relations: ['images', 'amenities', 'papers'] });
+      }
+      throw error;
+    });
+
+    if (!saved) {
+      throw new NotFoundException(`Property with ID ${id} not found`);
+    }
 
     // Invalidate cache after toggling featured status
     await this.invalidatePropertyCache();
 
-    // Try to reload with nearbyPlaces, fall back without it if table/column issues
-    let reloadedProperty: Property | null;
-    try {
-      reloadedProperty = await this.propertiesRepository.findOne({ where: { id: saved.id }, relations: ['images', 'amenities', 'papers', 'nearbyPlaces'] });
-    } catch (error: any) {
-      if (this.isNearbyPlacesError(error)) {
-        console.log('⚠️ nearby_places related error detected, retrying query without it');
-        reloadedProperty = await this.propertiesRepository.findOne({ where: { id: saved.id }, relations: ['images', 'amenities', 'papers'] });
-      } else {
-        reloadedProperty = saved;
-      }
-    }
-
-    const finalProperty = reloadedProperty || saved;
+    const finalProperty = saved;
 
     return {
       ...finalProperty,

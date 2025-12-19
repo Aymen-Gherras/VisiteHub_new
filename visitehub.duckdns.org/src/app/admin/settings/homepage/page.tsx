@@ -23,7 +23,6 @@ export default function AdminHomepageSettings() {
 
   // Featured management state
   const [featured, setFeatured] = useState<Array<{ property: any; position: number }>>([]);
-  const [addingSlugOrId, setAddingSlugOrId] = useState<string>('');
 
   useEffect(() => {
     const load = async () => {
@@ -164,29 +163,8 @@ export default function AdminHomepageSettings() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Featured Properties</h2>
         </div>
-        <div className="flex items-center gap-3 mb-4">
-          <input value={addingSlugOrId} onChange={(e) => setAddingSlugOrId(e.target.value)} placeholder="Enter property slug or ID" className="border rounded px-3 py-2 flex-1" />
-          <button
-            className="px-4 py-2 bg-emerald-600 text-white rounded"
-            onClick={async () => {
-              if (!token || !addingSlugOrId) return;
-              try {
-                let p;
-                try {
-                  p = await apiService.getPropertyBySlug(addingSlugOrId);
-                } catch (e) {
-                  // fallback: try by id
-                  p = await apiService.getProperty(addingSlugOrId);
-                }
-                await apiService.adminAddFeatured(p.id, token);
-                const f = await apiService.adminListFeatured(token);
-                setFeatured(f as any);
-                setAddingSlugOrId('');
-              } catch (e: any) {
-                alert(e?.message || 'Failed to add');
-              }
-            }}
-          >Add</button>
+        <div className="text-sm text-gray-600 mb-4">
+          Add/remove featured properties from the <span className="font-medium">Properties</span> page using the <span className="font-medium">Feature</span> button.
         </div>
 
         <div className="space-y-3">
