@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Header, Post, Query } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
+import { DisableCache } from '../common/decorators/disable-cache.decorator';
 
 @Controller('analytics')
 export class AnalyticsController {
@@ -23,6 +24,13 @@ export class AnalyticsController {
   @Get('top-locations')
   async topLocations(@Query('limit') limit?: string) {
     return this.analyticsService.mostVisitedLocations(limit ? parseInt(limit, 10) : 10);
+  }
+
+  @Get('summary')
+  @Header('Cache-Control', 'no-store')
+  @DisableCache()
+  async summary() {
+    return this.analyticsService.summary();
   }
 }
 

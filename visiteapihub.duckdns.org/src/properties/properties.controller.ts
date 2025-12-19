@@ -81,6 +81,14 @@ export class PropertiesController {
     return this.propertiesService.findAll(filters.limit || 20, filters.offset || 0);
   }
 
+  @Get('stats')
+  @Header('Cache-Control', 'no-store')
+  @DisableCache()
+  @ApiOperation({ summary: 'Get properties stats (count + total value)' })
+  stats() {
+    return this.propertiesService.getStats();
+  }
+
   @Get('featured')
   @Header('Cache-Control', 'no-store')
   @ApiOperation({ summary: 'Get featured properties' })

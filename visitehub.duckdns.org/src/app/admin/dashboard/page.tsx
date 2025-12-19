@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StatCard, RecentActivity, QuickActions } from '../components';
 import { ViewsBarChart, LocationsDoughnut } from '../components/analytics';
 import { apiService, Property } from '../../../api';
@@ -12,38 +12,65 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [propertiesTotal, setPropertiesTotal] = useState<number>(0);
+  const [activeListings, setActiveListings] = useState<number>(0);
+  const [totalValue, setTotalValue] = useState<number>(0);
+  const [totalVisits, setTotalVisits] = useState<number>(0);
+  const [totalAgences, setTotalAgences] = useState<number>(0);
+  const [totalPromoteurs, setTotalPromoteurs] = useState<number>(0);
+  const [totalProjects, setTotalProjects] = useState<number>(0);
   const [topViewed, setTopViewed] = useState<TopViewed[]>([]);
   const [topLocations, setTopLocations] = useState<TopLocation[]>([]);
 
-  useEffect(() => {
-    const run = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const [props, viewed, locs] = await Promise.all([
-          apiService.getProperties({ limit: 20 }),
-          apiService.getTopViewed(8),
-          apiService.getTopLocations(5),
-        ]);
-        setProperties(props.properties);
-        setTopViewed(viewed);
-        setTopLocations(locs);
-      } catch (e: any) {
-        setError(e?.message || 'Failed to load dashboard');
-      } finally {
-        setLoading(false);
-      }
-    };
-    run();
+  const loadDashboard = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [props, viewed, locs, summary] = await Promise.all([
+        apiService.getProperties({ limit: 20, sortBy: 'newest' }),
+        apiService.getTopViewed(8),
+        apiService.getTopLocations(5),
+        apiService.getAdminDashboardSummary(),
+      ]);
+      setProperties(props.properties);
+      setPropertiesTotal(summary.totalProperties ?? props.total ?? props.properties.length);
+      setActiveListings(summary.activeListings ?? summary.totalProperties ?? 0);
+      setTotalValue(summary.totalValueDzd ?? 0);
+      setTotalVisits(summary.totalVisits ?? 0);
+      setTotalAgences(summary.totalAgences ?? 0);
+      setTotalPromoteurs(summary.totalPromoteurs ?? 0);
+      setTotalProjects(summary.totalProjects ?? 0);
+      setTopViewed(viewed);
+      setTopLocations(locs);
+    } catch (e: any) {
+      setError(e?.message || 'Failed to load dashboard');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const totalProperties = properties.length;
-  const activeListings = totalProperties; // adjust if you have status
-  const totalViews = useMemo(() => topViewed.reduce((a, b) => a + (b.views || 0), 0), [topViewed]);
-  const revenue = useMemo(() => properties.reduce((sum, p) => {
-    const price = typeof p.price === 'string' ? parseFloat(p.price) || 0 : (p.price || 0);
-    return sum + price;
-  }, 0), [properties]);
+  useEffect(() => {
+    loadDashboard();
+
+    const onFocus = () => {
+      loadDashboard();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadDashboard();
+      }
+    };
+
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [loadDashboard]);
+
+  const totalProperties = propertiesTotal;
+  const totalViews = totalVisits;
 
   const locationsData = useMemo(() => topLocations.map((r) => ({
     label: `${r.wilaya}${r.daira ? `, ${r.daira}` : ''}`,
@@ -81,7 +108,10 @@ export default function AdminDashboard() {
         <StatCard title="Total Properties" value={totalProperties} change="" icon="🏠" />
         <StatCard title="Active Listings" value={activeListings} change="" icon="📋" />
         <StatCard title="Total Views" value={totalViews.toLocaleString()} change="" icon="👁️" />
-        <StatCard title="Total Value" value={`${Math.round(revenue).toLocaleString('ar-DZ')} DZD`} change="" icon="💰" />
+        <StatCard title="Total Value" value={`${Math.round(totalValue).toLocaleString('ar-DZ')} DZD`} change="" icon="💰" />
+        <StatCard title="Agences" value={totalAgences} change="" icon="🏢" />
+        <StatCard title="Promoteurs" value={totalPromoteurs} change="" icon="🏗️" />
+        <StatCard title="Projects" value={totalProjects} change="" icon="🧩" />
       </div>
 
       {/* Charts and Activity */}

@@ -76,6 +76,25 @@ export class PropertiesService {
     }
   }
 
+  async getStats(): Promise<{ totalProperties: number; activeListings: number; totalValue: number }> {
+    const raw = await this.propertiesRepository
+      .createQueryBuilder('p')
+      .select('COUNT(p.id)', 'totalProperties')
+      .addSelect(
+        "COALESCE(SUM(CAST(NULLIF(REPLACE(REPLACE(p.price, ' ', ''), ',', ''), '') AS DECIMAL(18,2))), 0)",
+        'totalValue',
+      )
+      .getRawOne<{ totalProperties?: string | number; totalValue?: string | number }>();
+
+    const totalProperties = Number(raw?.totalProperties ?? 0);
+    const totalValue = Number(raw?.totalValue ?? 0);
+
+    // No explicit listing-status field exists yet; treat all properties as active.
+    const activeListings = totalProperties;
+
+    return { totalProperties, activeListings, totalValue: Math.round(totalValue) };
+  }
+
   async create(createPropertyDto: CreatePropertyDto): Promise<TransformedProperty> {
     const { imageUrls, papers: paperNames, slug, price, ...propertyData } = createPropertyDto;
 

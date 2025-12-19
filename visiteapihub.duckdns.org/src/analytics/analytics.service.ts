@@ -81,6 +81,19 @@ export class AnalyticsService {
       .getRawMany();
     return rows.map(r => ({ wilaya: r.wilaya, daira: r.daira, visits: Number(r.visits) }));
   }
+
+  async summary(): Promise<{ totalVisits: number; last7DaysVisits: number }> {
+    const totalVisits = await this.visitRepo.count();
+    const last7Days = new Date();
+    last7Days.setDate(last7Days.getDate() - 7);
+
+    const last7DaysVisits = await this.visitRepo
+      .createQueryBuilder('v')
+      .where('v.createdAt >= :since', { since: last7Days })
+      .getCount();
+
+    return { totalVisits, last7DaysVisits };
+  }
 }
 
 

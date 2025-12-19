@@ -512,6 +512,11 @@ export class ApiService {
     return this.makeRequest<Property[]>(`/api/properties/featured?_=${ts}`);
   }
 
+  async getPropertiesStats(): Promise<{ totalProperties: number; activeListings: number; totalValue: number }> {
+    const ts = Date.now();
+    return this.makeRequest(`/properties/stats?_=${ts}`);
+  }
+
   // Featured properties admin
   async adminListFeatured(token: string): Promise<Array<{ property: Property; position: number }>> {
     const ts = Date.now();
@@ -630,8 +635,23 @@ export class ApiService {
     });
   }
 
+  // Admin Dashboard
+  async getAdminDashboardSummary(): Promise<{
+    totalProperties: number;
+    activeListings: number;
+    totalAgences: number;
+    totalPromoteurs: number;
+    totalProjects: number;
+    totalVisits: number;
+    totalValueDzd: number;
+  }> {
+    const ts = Date.now();
+    return this.makeRequest(`/api/admin/dashboard/summary?_=${ts}`);
+  }
+
   async getTopViewed(limit = 10): Promise<Array<{ propertyId: string; title: string; views: number }>> {
-    return this.makeRequest(`/analytics/top-viewed?limit=${limit}`);
+    const ts = Date.now();
+    return this.makeRequest(`/analytics/top-viewed?limit=${limit}&_=${ts}`);
   }
 
   async getLongestStayed(limit = 10): Promise<Array<{ propertyId: string; title: string; avgDurationSeconds: number }>> {
@@ -639,7 +659,13 @@ export class ApiService {
   }
 
   async getTopLocations(limit = 10): Promise<Array<{ wilaya: string; daira: string | null; visits: number }>> {
-    return this.makeRequest(`/analytics/top-locations?limit=${limit}`);
+    const ts = Date.now();
+    return this.makeRequest(`/analytics/top-locations?limit=${limit}&_=${ts}`);
+  }
+
+  async getAnalyticsSummary(): Promise<{ totalVisits: number; last7DaysVisits: number }> {
+    const ts = Date.now();
+    return this.makeRequest(`/analytics/summary?_=${ts}`);
   }
 
   async getProperty(id: string): Promise<Property> {

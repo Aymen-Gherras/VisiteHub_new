@@ -26,6 +26,7 @@ import { SiteSettingsModule } from './site-settings/site-settings.module';
 import { AgencesModule } from './agences/agences.module';
 import { PromoteursModule } from './promoteurs/promoteurs.module';
 import { ProjectsModule } from './projects/projects.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { CommonModule } from './common/common.module';
 
@@ -107,6 +108,7 @@ import { CommonModule } from './common/common.module';
     AgencesModule,
     PromoteursModule,
     ProjectsModule,
+    DashboardModule,
   ],
 
   controllers: [AppController],
