@@ -19,6 +19,9 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
 
+  // Trust reverse proxies (for correct req.protocol behind HTTPS/load balancers)
+  app.set('trust proxy', 1);
+
   // Serve locally uploaded files
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads',

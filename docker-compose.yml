@@ -5,11 +5,15 @@ services:
       context: ./visitehub.duckdns.org
       args:
         NEXT_PUBLIC_API_BASE_URL: http://localhost:4001
+        API_INTERNAL_BASE_URL: http://backend:4000
     container_name: VisiteHub-frontend-new
     ports:
       - "3002:3000"
     environment:
       - NEXT_PUBLIC_API_BASE_URL=http://localhost:4001
+      - API_INTERNAL_BASE_URL=http://backend:4000
+      - HOSTNAME=0.0.0.0
+      - NODE_OPTIONS=--dns-result-order=ipv4first
     depends_on:
       - backend
     restart: unless-stopped
@@ -28,6 +32,8 @@ services:
       - DB_PORT=3306
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+    volumes:
+      - ./visiteapihub.duckdns.org/uploads:/app/uploads
     depends_on:
       - db
       - redis

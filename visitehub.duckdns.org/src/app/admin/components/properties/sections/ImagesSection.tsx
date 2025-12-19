@@ -35,12 +35,8 @@ export default function ImagesSection({ propertyData, setPropertyData, onNext, o
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadToCloudinary = async (file: File): Promise<string> => {
-    if (!token) {
-      throw new Error('Authentication required');
-    }
-    
-    const response = await apiService.uploadImage(file, token);
+  const uploadImage = async (file: File): Promise<string> => {
+    const response = await apiService.uploadImage(file, token ?? undefined);
     return response.imageUrl;
   };
 
@@ -64,8 +60,8 @@ export default function ImagesSection({ propertyData, setPropertyData, onNext, o
         setImages(prev => [...prev, tempImage]);
 
         try {
-          // Upload to Cloudinary
-          const cloudinaryUrl = await uploadToCloudinary(file);
+          // Upload image
+          const cloudinaryUrl = await uploadImage(file);
           
           // Update the image with the Cloudinary URL
           setImages(prev => prev.map(img => 

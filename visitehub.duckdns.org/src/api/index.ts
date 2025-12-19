@@ -70,6 +70,8 @@ export interface Agence {
   daira?: string;
   website?: string;
   logo?: string;
+  coverImage?: string;
+  propertiesCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -85,6 +87,7 @@ export interface CreateAgenceDto {
   daira?: string;
   website?: string;
   logo?: string;
+  coverImage?: string;
 }
 
 export interface UpdateAgenceDto extends Partial<CreateAgenceDto> {}
@@ -119,6 +122,7 @@ export interface CreatePromoteurDto {
   daira?: string;
   website?: string;
   logo?: string;
+  coverImage?: string;
 }
 
 export interface UpdatePromoteurDto extends Partial<CreatePromoteurDto> {}
@@ -152,6 +156,7 @@ export interface CreateProjectDto {
   wilaya?: string;
   daira?: string;
   address?: string;
+  coverImage?: string;
   floorsCount?: number;
   unitsPerFloor?: number;
 }
@@ -976,15 +981,16 @@ export class ApiService {
   }
 
   // Image Upload API
-  async uploadImage(file: File, token: string): Promise<{ imageUrl: string }> {
+  async uploadImage(file: File, token?: string): Promise<{ imageUrl: string }> {
     const formData = new FormData();
     formData.append('image', file);
 
-    const response = await fetch(this.buildUrl('/upload/image'), {
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const response = await fetch(this.buildUrl('/api/upload/image'), {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      headers,
       body: formData,
     });
 

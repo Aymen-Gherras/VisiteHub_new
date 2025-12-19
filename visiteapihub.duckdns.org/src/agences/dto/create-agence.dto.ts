@@ -39,4 +39,8 @@ export class CreateAgenceDto {
   @IsOptional()
   @IsString()
   logo?: string;
+
+  @IsOptional()
+  @IsString()
+  coverImage?: string;
 }

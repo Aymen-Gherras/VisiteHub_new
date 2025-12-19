@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { apiService } from '../../../../api';
 import { useAuth } from '../../../../context/AuthContext';
 import type { Promoteur } from '../../../../api';
+import ImageDropzone from '../../components/common/ImageDropzone';
 
 export default function CreatePromoteur() {
   const router = useRouter();
@@ -13,6 +14,9 @@ export default function CreatePromoteur() {
   const [error, setError] = useState<string | null>(null);
   const [wilayas, setWilayas] = useState<string[]>([]);
   const [dairas, setDairas] = useState<string[]>([]);
+
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [projectSlugManuallyEdited, setProjectSlugManuallyEdited] = useState(false);
 
   const [step, setStep] = useState<1 | 2>(1);
   const [createdPromoteur, setCreatedPromoteur] = useState<Promoteur | null>(null);
@@ -28,6 +32,7 @@ export default function CreatePromoteur() {
     daira: '',
     website: '',
     logo: '',
+    coverImage: '',
   });
 
   const [projectData, setProjectData] = useState({
@@ -37,6 +42,7 @@ export default function CreatePromoteur() {
     wilaya: '',
     daira: '',
     address: '',
+    coverImage: '',
   });
 
   // Fetch wilayas on mount
@@ -88,24 +94,44 @@ export default function CreatePromoteur() {
     if (step === 2) fetchDairas();
   }, [projectData.wilaya, step]);
 
-  // Auto-generate slug from name
-  useEffect(() => {
-    if (formData.name && !formData.slug) {
-      const slug = formData.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-      setFormData(prev => ({ ...prev, slug }));
-    }
-  }, [formData.name]);
+  const slugify = (value: string) =>
+    value
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+
+    if (name === 'slug') {
+      setSlugManuallyEdited(value.trim().length > 0);
+      setFormData(prev => ({ ...prev, slug: value }));
+      return;
+    }
+
+    if (name === 'name') {
+      setFormData(prev => ({ ...prev, name: value, slug: slugManuallyEdited ? prev.slug : slugify(value) }));
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleProjectChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+
+    if (name === 'slug') {
+      setProjectSlugManuallyEdited(value.trim().length > 0);
+      setProjectData(prev => ({ ...prev, slug: value }));
+      return;
+    }
+
+    if (name === 'name') {
+      setProjectData(prev => ({ ...prev, name: value, slug: projectSlugManuallyEdited ? prev.slug : slugify(value) }));
+      return;
+    }
+
     setProjectData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -374,19 +400,21 @@ export default function CreatePromoteur() {
               />
             </div>
 
-            {/* Logo URL */}
-            <div>
-              <label htmlFor="logo" className="block text-sm font-medium text-gray-700 mb-2">
-                Logo URL
-              </label>
-              <input
-                type="url"
-                id="logo"
-                name="logo"
+            {/* Images */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ImageDropzone
+                title="Promoteur Logo"
+                description="Shown on promoteur cards and profile"
                 value={formData.logo}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://example.com/logo.png"
+                onChange={(url) => setFormData(prev => ({ ...prev, logo: url }))}
+                buttonText="Choose Logo"
+              />
+              <ImageDropzone
+                title="Promoteur Cover Image"
+                description="Shown as the promoteur header/hero image"
+                value={formData.coverImage}
+                onChange={(url) => setFormData(prev => ({ ...prev, coverImage: url }))}
+                buttonText="Choose Cover"
               />
             </div>
           </div>
@@ -512,6 +540,14 @@ export default function CreatePromoteur() {
                   placeholder="Address"
                 />
               </div>
+
+              <ImageDropzone
+                title="Project Cover Image"
+                description="Shown on project card and project header"
+                value={projectData.coverImage}
+                onChange={(url) => setProjectData(prev => ({ ...prev, coverImage: url }))}
+                buttonText="Choose Cover"
+              />
 
               <div className="flex items-center justify-between">
                 <button

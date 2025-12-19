@@ -34,9 +34,22 @@ export class AgencesService {
   }
 
   async findAll(): Promise<Agence[]> {
-    return await this.agenceRepository.find({
+    const agences = await this.agenceRepository.find({
       order: { name: 'ASC' },
     });
+
+    const rawCounts = await this.propertiesRepository
+      .createQueryBuilder('property')
+      .select('property.propertyOwnerName', 'ownerName')
+      .addSelect('COUNT(1)', 'count')
+      .where('property.propertyOwnerType = :ownerType', { ownerType: 'Agence immobilière' })
+      .andWhere('property.propertyOwnerName IS NOT NULL')
+      .groupBy('property.propertyOwnerName')
+      .getRawMany<{ ownerName: string; count: string }>();
+
+    const countByOwnerName = new Map(rawCounts.map((r) => [r.ownerName, Number(r.count || 0)]));
+
+    return agences.map((agence) => Object.assign(agence, { propertiesCount: countByOwnerName.get(agence.name) ?? 0 }));
   }
 
   async findOne(id: string): Promise<Agence> {

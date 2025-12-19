@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { apiService, Project, Promoteur, Property } from '@/api';
 import { PropertyCard } from '@/app/components/ui/PropertyCard';
+import { resolveImageUrl } from '@/lib/resolveImageUrl';
 
 type UiProject = Project & {
   slug: string;
@@ -102,6 +103,8 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     );
   }
 
+  const coverUrl = resolveImageUrl(project.coverImage);
+
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
       <div className="bg-white border-b">
@@ -117,8 +120,15 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       </div>
 
       <div className="relative h-64 md:h-80 overflow-hidden">
-        {project.coverImage ? (
-          <Image src={project.coverImage} alt={`Couverture ${project.name}`} fill className="object-cover" />
+        {coverUrl ? (
+          <Image
+            src={coverUrl}
+            alt={`Couverture ${project.name}`}
+            fill
+            className="object-cover"
+            sizes="100vw"
+            unoptimized={coverUrl.includes('/uploads/')}
+          />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600"></div>
         )}

@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { resolveImageUrl } from '@/lib/resolveImageUrl';
 
 type PropertyGalleryProps = {
-  images: string[];
+  images: unknown;
   selectedIndex: number;
   onImageSelect: (index: number) => void;
   propertyTitle?: string;
@@ -24,6 +25,59 @@ export const PropertyGallery: React.FC<PropertyGalleryProps> = ({
 }) => {
   const [showZoomModal, setShowZoomModal] = useState(false);
   const [zoomedImageIndex, setZoomedImageIndex] = useState(0);
+
+  const normalizeImagesInput = (value: unknown): string[] => {
+    if (!value) return [];
+
+    // Already an array.
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => {
+          if (typeof item === 'string') return item;
+          if (item && typeof item === 'object') {
+            const maybeUrl = (item as any).url || (item as any).path || (item as any).src;
+            return typeof maybeUrl === 'string' ? maybeUrl : undefined;
+          }
+          return undefined;
+        })
+        .filter((s): s is string => typeof s === 'string' && s.trim().length > 0);
+    }
+
+    // Some backends serialize arrays as JSON strings.
+    if (typeof value === 'string') {
+      const str = value.trim();
+      if (!str) return [];
+      if (str.startsWith('[') && str.endsWith(']')) {
+        try {
+          const parsed = JSON.parse(str);
+          return normalizeImagesInput(parsed);
+        } catch {
+          // fall through
+        }
+      }
+
+      // Comma-separated fallback.
+      if (str.includes(',')) {
+        return str
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+      }
+
+      // Single string.
+      return [str];
+    }
+
+    return [];
+  };
+
+  const normalizedImages = normalizeImagesInput(images)
+    .map((img) => resolveImageUrl(img))
+    .filter((img): img is string => Boolean(img));
+
+  const safeSelectedIndex = normalizedImages.length > 0
+    ? Math.min(Math.max(selectedIndex, 0), normalizedImages.length - 1)
+    : 0;
 
   // Generate SEO-friendly alt text and title for images
   const getImageAltText = (imageIndex: number) => {
@@ -56,25 +110,26 @@ export const PropertyGallery: React.FC<PropertyGalleryProps> = ({
   };
 
   const nextImage = () => {
-    setZoomedImageIndex((prev) => (prev + 1) % images.length);
+    setZoomedImageIndex((prev) => (prev + 1) % normalizedImages.length);
   };
 
   const prevImage = () => {
-    setZoomedImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    setZoomedImageIndex((prev) => (prev - 1 + normalizedImages.length) % normalizedImages.length);
   };
 
   return (
     <div className="bg-white rounded-lg overflow-hidden shadow-sm">
       {/* Main Image */}
-      <div className="relative aspect-video cursor-pointer" onClick={() => openZoomModal(selectedIndex)}>
-        {images && images.length > 0 ? (
+      <div className="relative aspect-video cursor-pointer" onClick={() => openZoomModal(safeSelectedIndex)}>
+        {normalizedImages.length > 0 ? (
           <Image
-            src={images[selectedIndex]}
-            alt={getImageAltText(selectedIndex)}
-            title={getImageTitle(selectedIndex)}
+            src={normalizedImages[safeSelectedIndex]}
+            alt={getImageAltText(safeSelectedIndex)}
+            title={getImageTitle(safeSelectedIndex)}
             fill
             className="object-cover hover:scale-105 transition-transform duration-200"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw"
+            unoptimized={normalizedImages[safeSelectedIndex].startsWith('/uploads/')}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-100">
@@ -89,14 +144,14 @@ export const PropertyGallery: React.FC<PropertyGalleryProps> = ({
       </div>
 
       {/* Thumbnail Navigation */}
-      {images && images.length > 1 && (
+      {normalizedImages.length > 1 && (
         <div className="p-2 sm:p-4 flex gap-2 overflow-x-auto">
-          {images.map((image, index) => (
+          {normalizedImages.map((image, index) => (
             <button
               key={index}
               onClick={() => onImageSelect(index)}
               className={`relative flex-shrink-0 w-16 h-12 sm:w-20 sm:h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                index === selectedIndex
+                index === safeSelectedIndex
                   ? 'border-blue-600'
                   : 'border-transparent hover:border-blue-400'
               }`}
@@ -108,6 +163,7 @@ export const PropertyGallery: React.FC<PropertyGalleryProps> = ({
                 fill
                 className="object-cover cursor-pointer"
                 sizes="80px"
+                unoptimized={image.startsWith('/uploads/')}
               />
               {/* Click to zoom indicator */}
               <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center">
@@ -131,7 +187,7 @@ export const PropertyGallery: React.FC<PropertyGalleryProps> = ({
             </button>
 
             {/* Navigation arrows */}
-            {images.length > 1 && (
+            {normalizedImages.length > 1 && (
               <>
                 <button
                   onClick={prevImage}
@@ -150,18 +206,19 @@ export const PropertyGallery: React.FC<PropertyGalleryProps> = ({
 
             {/* Image counter */}
             <div className="absolute top-4 left-4 z-10 bg-black/50 text-white px-3 py-1 rounded text-sm">
-              {zoomedImageIndex + 1} / {images.length}
+              {zoomedImageIndex + 1} / {normalizedImages.length}
             </div>
 
             {/* Main zoomed image */}
             <div className="relative w-full h-full flex items-center justify-center">
               <Image
-                src={images[zoomedImageIndex]}
+                src={normalizedImages[zoomedImageIndex]}
                 alt={getImageAltText(zoomedImageIndex)}
                 title={getImageTitle(zoomedImageIndex)}
                 fill
                 className="object-contain"
                 sizes="100vw"
+                unoptimized={normalizedImages[zoomedImageIndex].startsWith('/uploads/')}
               />
             </div>
           </div>

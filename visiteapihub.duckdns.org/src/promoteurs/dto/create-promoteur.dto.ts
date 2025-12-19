@@ -39,4 +39,8 @@ export class CreatePromoteurDto {
   @IsOptional()
   @IsString()
   logo?: string;
+
+  @IsOptional()
+  @IsString()
+  coverImage?: string;
 }

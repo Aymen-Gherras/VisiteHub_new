@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { apiService } from '../../../../../api';
 import { useAuth } from '../../../../../context/AuthContext';
+import ImageDropzone from '../../../components/common/ImageDropzone';
 
 export default function EditAgence() {
   const router = useRouter();
@@ -28,6 +29,7 @@ export default function EditAgence() {
     daira: '',
     website: '',
     logo: '',
+    coverImage: '',
   });
 
   // Fetch agence data on mount
@@ -49,6 +51,7 @@ export default function EditAgence() {
           daira: agence.daira || '',
           website: agence.website || '',
           logo: agence.logo || '',
+          coverImage: (agence as any).coverImage || '',
         });
       } catch (err) {
         console.error('Error fetching agence:', err);
@@ -333,19 +336,21 @@ export default function EditAgence() {
               />
             </div>
 
-            {/* Logo URL */}
-            <div>
-              <label htmlFor="logo" className="block text-sm font-medium text-gray-700 mb-2">
-                Logo URL
-              </label>
-              <input
-                type="url"
-                id="logo"
-                name="logo"
+            {/* Images */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ImageDropzone
+                title="Agence Logo"
+                description="Shown on agence cards and profile"
                 value={formData.logo}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://example.com/logo.png"
+                onChange={(url) => setFormData(prev => ({ ...prev, logo: url }))}
+                buttonText="Choose Logo"
+              />
+              <ImageDropzone
+                title="Agence Cover Image"
+                description="Shown as the agence header/hero image"
+                value={formData.coverImage}
+                onChange={(url) => setFormData(prev => ({ ...prev, coverImage: url }))}
+                buttonText="Choose Cover"
               />
             </div>
           </div>

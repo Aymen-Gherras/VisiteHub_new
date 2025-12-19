@@ -39,6 +39,7 @@ export class ProjectsService {
       wilaya: dto.wilaya ?? '',
       daira: dto.daira ?? '',
       address: dto.address,
+      coverImage: dto.coverImage,
       floorsCount: dto.floorsCount,
       unitsPerFloor: dto.unitsPerFloor,
     });
@@ -91,6 +92,7 @@ export class ProjectsService {
     if (dto.wilaya !== undefined) project.wilaya = dto.wilaya ?? '';
     if (dto.daira !== undefined) project.daira = dto.daira ?? '';
     if (dto.address !== undefined) project.address = dto.address;
+    if (dto.coverImage !== undefined) project.coverImage = dto.coverImage;
     if (dto.floorsCount !== undefined) project.floorsCount = dto.floorsCount;
     if (dto.unitsPerFloor !== undefined) project.unitsPerFloor = dto.unitsPerFloor;
 

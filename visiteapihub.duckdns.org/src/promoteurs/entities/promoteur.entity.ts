@@ -36,6 +36,9 @@ export class Promoteur {
   @Column({ nullable: true })
   logo: string;
 
+  @Column({ nullable: true })
+  coverImage: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

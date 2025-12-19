@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { apiService, CreateProjectDto, Project, UpdateProjectDto } from '../../../../../api';
 import { useAuth } from '../../../../../context/AuthContext';
+import ImageDropzone from '../../../components/common/ImageDropzone';
 
 export default function EditPromoteur() {
   const router = useRouter();
@@ -32,6 +33,7 @@ export default function EditPromoteur() {
     wilaya: '',
     daira: '',
     address: '',
+    coverImage: '',
   });
   const [newProjectDairas, setNewProjectDairas] = useState<string[]>([]);
 
@@ -46,6 +48,7 @@ export default function EditPromoteur() {
     daira: '',
     website: '',
     logo: '',
+    coverImage: '',
   });
 
   // Fetch promoteur data on mount
@@ -67,6 +70,7 @@ export default function EditPromoteur() {
           daira: promoteur.daira || '',
           website: promoteur.website || '',
           logo: promoteur.logo || '',
+          coverImage: (promoteur as any).coverImage || '',
         });
       } catch (err) {
         console.error('Error fetching promoteur:', err);
@@ -208,6 +212,7 @@ export default function EditPromoteur() {
       wilaya: project.wilaya || '',
       daira: project.daira || '',
       address: project.address || '',
+      coverImage: (project as any).coverImage || '',
       floorsCount: project.floorsCount,
       unitsPerFloor: project.unitsPerFloor,
     });
@@ -267,6 +272,7 @@ export default function EditPromoteur() {
         wilaya: newProjectData.wilaya || undefined,
         daira: newProjectData.daira || undefined,
         address: newProjectData.address?.trim() || undefined,
+        coverImage: (newProjectData as any).coverImage?.trim() || undefined,
       };
       await apiService.createPromoteurProject(promoteurId, payload, token);
       await refreshProjects();
@@ -277,6 +283,7 @@ export default function EditPromoteur() {
         wilaya: '',
         daira: '',
         address: '',
+        coverImage: '',
       });
       setNewProjectDairas([]);
     } catch (err) {
@@ -549,19 +556,21 @@ export default function EditPromoteur() {
               />
             </div>
 
-            {/* Logo URL */}
-            <div>
-              <label htmlFor="logo" className="block text-sm font-medium text-gray-700 mb-2">
-                Logo URL
-              </label>
-              <input
-                type="url"
-                id="logo"
-                name="logo"
+            {/* Images */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ImageDropzone
+                title="Promoteur Logo"
+                description="Shown on promoteur cards and profile"
                 value={formData.logo}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://example.com/logo.png"
+                onChange={(url) => setFormData(prev => ({ ...prev, logo: url }))}
+                buttonText="Choose Logo"
+              />
+              <ImageDropzone
+                title="Promoteur Cover Image"
+                description="Shown as the promoteur header/hero image"
+                value={formData.coverImage}
+                onChange={(url) => setFormData(prev => ({ ...prev, coverImage: url }))}
+                buttonText="Choose Cover"
               />
             </div>
           </div>
@@ -695,6 +704,14 @@ export default function EditPromoteur() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
+
+                      <ImageDropzone
+                        title="Project Cover Image"
+                        description="Shown on project card and project header"
+                        value={(editProjectData as any).coverImage || ''}
+                        onChange={(url) => setEditProjectData(prev => ({ ...(prev as any), coverImage: url }))}
+                        buttonText="Choose Cover"
+                      />
 
                       <div className="flex items-center justify-end gap-3">
                         <button
@@ -834,6 +851,14 @@ export default function EditPromoteur() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
+
+              <ImageDropzone
+                title="Project Cover Image"
+                description="Shown on project card and project header"
+                value={(newProjectData as any).coverImage || ''}
+                onChange={(url) => setNewProjectData(prev => ({ ...(prev as any), coverImage: url }))}
+                buttonText="Choose Cover"
+              />
 
               <div className="flex items-center justify-end">
                 <button

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { PropertyCard } from '@/app/components/ui/PropertyCard';
 import { apiService, Agence, Property } from '@/api';
+import { resolveImageUrl } from '@/lib/resolveImageUrl';
 
 type UiAgence = Agence & {
   properties?: Property[];
@@ -98,16 +99,21 @@ export default function AgencePage({ params }: AgencePageProps) {
     );
   }
 
+  const coverUrl = resolveImageUrl(agence.coverImage);
+  const logoUrl = resolveImageUrl(agence.logo);
+
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
       {/* Header with cover image */}
       <div className="relative h-64 md:h-80 overflow-hidden">
-        {agence.coverImage ? (
+        {coverUrl ? (
           <Image
-            src={agence.coverImage}
+            src={coverUrl}
             alt={`Couverture ${agence.name}`}
             fill
             className="object-cover"
+            sizes="100vw"
+            unoptimized={coverUrl.includes('/uploads/')}
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-blue-800 via-blue-600 to-blue-500"></div>
@@ -122,13 +128,14 @@ export default function AgencePage({ params }: AgencePageProps) {
             <div className="flex items-start gap-6">
               {/* Logo Circle */}
               <div className={`w-24 h-24 md:w-32 md:h-32 ${agence.bgColor} rounded-full flex items-center justify-center flex-shrink-0`}>
-                {agence.logo ? (
+                {logoUrl ? (
                   <Image
-                    src={agence.logo}
+                    src={logoUrl}
                     alt={`Logo ${agence.name}`}
                     width={128}
                     height={128}
                     className="w-full h-full object-contain rounded-full"
+                    unoptimized={logoUrl.includes('/uploads/')}
                   />
                 ) : (
                   <span className="text-4xl md:text-5xl font-bold text-white">{agence.initials}</span>

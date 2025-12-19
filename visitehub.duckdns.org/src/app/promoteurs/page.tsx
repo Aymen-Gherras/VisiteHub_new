@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { apiService } from '../../api';
+import { resolveImageUrl } from '@/lib/resolveImageUrl';
 
 interface Promoteur {
   id: string;
@@ -13,6 +14,7 @@ interface Promoteur {
   daira?: string;
   description?: string;
   logo?: string;
+  coverImage?: string;
   email?: string;
   phoneNumber?: string;
   address?: string;
@@ -406,8 +408,29 @@ export default function PromoteursPage() {
               >
                 {/* Cover Image with Initials */}
                 <div className={`relative h-48 ${promoteur.bgColor} flex items-center justify-center`}>
-                  <div className="w-24 h-24 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/20">
-                    <span className="text-4xl font-bold text-white">{promoteur.initials}</span>
+                  {resolveImageUrl(promoteur.coverImage) ? (
+                    <Image
+                      src={resolveImageUrl(promoteur.coverImage) as string}
+                      alt={`Couverture ${promoteur.name}`}
+                      fill
+                      className="object-cover"
+                      unoptimized={(resolveImageUrl(promoteur.coverImage) as string).startsWith('/uploads/')}
+                    />
+                  ) : null}
+                  <div className="absolute inset-0 bg-black/10" />
+
+                  <div className="relative w-24 h-24 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/20 overflow-hidden">
+                    {resolveImageUrl(promoteur.logo) ? (
+                      <Image
+                        src={resolveImageUrl(promoteur.logo) as string}
+                        alt={`Logo ${promoteur.name}`}
+                        fill
+                        className="object-cover"
+                        unoptimized={(resolveImageUrl(promoteur.logo) as string).startsWith('/uploads/')}
+                      />
+                    ) : (
+                      <span className="text-4xl font-bold text-white">{promoteur.initials}</span>
+                    )}
                   </div>
                 </div>
 

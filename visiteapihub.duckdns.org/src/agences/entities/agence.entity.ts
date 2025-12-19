@@ -35,6 +35,9 @@ export class Agence {
   @Column({ nullable: true })
   logo: string;
 
+  @Column({ nullable: true })
+  coverImage: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

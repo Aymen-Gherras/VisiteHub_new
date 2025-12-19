@@ -5,6 +5,7 @@ import { Property } from '../../../api';
 import { formatPrice } from '../../../utils/formatPrice';
 import { getTimeAgo, getRentPeriodLabel, isRecentlyAdded } from '../../../utils/dateUtils';
 import { isSvgIcon, getSvgIconPath } from '@/app/utils/iconUtils';
+import { resolveImageUrl } from '@/lib/resolveImageUrl';
 
 // Nearby places are displayed on the card instead of amenities
 
@@ -57,17 +58,42 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
   const imageAltText = `${property.title} - ${propertyTypeLabel}${location ? ` - ${location}` : ''} - Image 1`;
   const imageTitle = `${property.title} - ${propertyTypeLabel}${location ? ` à ${location}` : ''} - ${getTransactionTypeLabel(property.transactionType)}`;
 
+  const normalizeImagesInput = (value: unknown): string[] => {
+    if (!value) return [];
+    if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string' && v.trim().length > 0);
+    if (typeof value === 'string') {
+      const str = value.trim();
+      if (!str) return [];
+      if (str.startsWith('[') && str.endsWith(']')) {
+        try {
+          const parsed = JSON.parse(str);
+          return normalizeImagesInput(parsed);
+        } catch {
+          // fall through
+        }
+      }
+      if (str.includes(',')) return str.split(',').map((s) => s.trim()).filter(Boolean);
+      return [str];
+    }
+    return [];
+  };
+
+  const imagesList = normalizeImagesInput((property as any).images);
+  const primaryImage = resolveImageUrl(imagesList.length > 0 ? imagesList[0] : undefined);
+  const unoptimized = Boolean(primaryImage && primaryImage.startsWith('/uploads/'));
+
   return (
     <div className={`bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 group ${className}`}>
       {/* Property Image */}
       <div className="relative overflow-hidden h-64">
         <Image
-          src={property.images && property.images.length > 0 ? property.images[0] : 'https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg?auto=compress&cs=tinysrgb&w=800'}
+          src={primaryImage || 'https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg?auto=compress&cs=tinysrgb&w=800'}
           alt={imageAltText}
           title={imageTitle}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-300"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          unoptimized={unoptimized}
         />
         <div className="absolute top-4 left-4 flex gap-2">
           <span className={`px-3 py-1 rounded-full text-sm font-medium ${property.transactionType === 'vendre'

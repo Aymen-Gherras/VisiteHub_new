@@ -27,6 +27,10 @@ export class CreateProjectDto {
   address?: string;
 
   @IsOptional()
+  @IsString()
+  coverImage?: string;
+
+  @IsOptional()
   @Transform(({ value }) => (value === '' || value === null || value === undefined ? undefined : Number(value)))
   @IsInt()
   @Min(0)

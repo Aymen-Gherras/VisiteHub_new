@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { apiService } from '../../api';
+import { resolveImageUrl } from '@/lib/resolveImageUrl';
 
 // Helper function to generate URL-friendly slugs
 const generateSlug = (name: string): string => {
@@ -23,6 +24,7 @@ interface Agence {
   daira?: string;
   description?: string;
   logo?: string;
+  coverImage?: string;
   email?: string;
   phoneNumber?: string;
   address?: string;
@@ -77,7 +79,7 @@ export default function AgencesPage() {
         // Transform API data to include UI-specific fields
         const transformedData: Agence[] = data.map((agence) => ({
           ...agence,
-          propertiesCount: 0, // TODO: Add property count from backend
+          propertiesCount: (agence as any).propertiesCount ?? 0,
           initials: generateInitials(agence.name),
           bgColor: getColor(agence.id),
         }));
@@ -406,8 +408,29 @@ export default function AgencesPage() {
               >
                 {/* Cover Image with Initials */}
                 <div className={`relative h-48 ${agence.bgColor} flex items-center justify-center`}>
-                  <div className="w-24 h-24 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/20">
-                    <span className="text-4xl font-bold text-white">{agence.initials}</span>
+                  {resolveImageUrl(agence.coverImage) ? (
+                    <Image
+                      src={resolveImageUrl(agence.coverImage) as string}
+                      alt={`Couverture ${agence.name}`}
+                      fill
+                      className="object-cover"
+                      unoptimized={(resolveImageUrl(agence.coverImage) as string).startsWith('/uploads/')}
+                    />
+                  ) : null}
+                  <div className="absolute inset-0 bg-black/10" />
+
+                  <div className="relative w-24 h-24 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/20 overflow-hidden">
+                    {resolveImageUrl(agence.logo) ? (
+                      <Image
+                        src={resolveImageUrl(agence.logo) as string}
+                        alt={`Logo ${agence.name}`}
+                        fill
+                        className="object-cover"
+                        unoptimized={(resolveImageUrl(agence.logo) as string).startsWith('/uploads/')}
+                      />
+                    ) : (
+                      <span className="text-4xl font-bold text-white">{agence.initials}</span>
+                    )}
                   </div>
                 </div>
 
