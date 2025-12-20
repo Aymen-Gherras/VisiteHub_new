@@ -156,6 +156,7 @@ export interface CreateProjectDto {
   wilaya?: string;
   daira?: string;
   address?: string;
+  status?: 'completed' | 'construction' | 'planning' | 'suspended';
   coverImage?: string;
   floorsCount?: number;
   unitsPerFloor?: number;

@@ -33,6 +33,7 @@ export default function EditPromoteur() {
     wilaya: '',
     daira: '',
     address: '',
+    status: 'planning',
     coverImage: '',
   });
   const [newProjectDairas, setNewProjectDairas] = useState<string[]>([]);
@@ -212,6 +213,7 @@ export default function EditPromoteur() {
       wilaya: project.wilaya || '',
       daira: project.daira || '',
       address: project.address || '',
+      status: (project.status || 'planning') as any,
       coverImage: (project as any).coverImage || '',
       floorsCount: project.floorsCount,
       unitsPerFloor: project.unitsPerFloor,
@@ -283,6 +285,7 @@ export default function EditPromoteur() {
         wilaya: '',
         daira: '',
         address: '',
+        status: 'planning',
         coverImage: '',
       });
       setNewProjectDairas([]);
@@ -695,6 +698,21 @@ export default function EditPromoteur() {
                       </div>
 
                       <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Ticket / Statut</label>
+                        <select
+                          name="status"
+                          value={(editProjectData as any).status || 'planning'}
+                          onChange={handleEditProjectChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="planning">Planifié</option>
+                          <option value="construction">En cours</option>
+                          <option value="completed">Livré</option>
+                          <option value="suspended">Suspendu</option>
+                        </select>
+                      </div>
+
+                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
                         <input
                           type="text"
@@ -839,6 +857,21 @@ export default function EditPromoteur() {
                     ))}
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ticket / Statut</label>
+                <select
+                  name="status"
+                  value={(newProjectData as any).status || 'planning'}
+                  onChange={handleNewProjectChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="planning">Planifié</option>
+                  <option value="construction">En cours</option>
+                  <option value="completed">Livré</option>
+                  <option value="suspended">Suspendu</option>
+                </select>
               </div>
 
               <div>

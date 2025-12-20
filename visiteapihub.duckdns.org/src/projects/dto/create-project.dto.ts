@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
-import { IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
+import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
+import type { ProjectStatus } from '../entities/project.entity';
 
 export class CreateProjectDto {
   @IsString()
@@ -25,6 +26,10 @@ export class CreateProjectDto {
   @IsOptional()
   @IsString()
   address?: string;
+
+  @IsOptional()
+  @IsIn(['completed', 'construction', 'planning', 'suspended'])
+  status?: ProjectStatus;
 
   @IsOptional()
   @IsString()

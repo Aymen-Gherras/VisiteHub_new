@@ -42,6 +42,7 @@ export default function CreatePromoteur() {
     wilaya: '',
     daira: '',
     address: '',
+    status: 'planning' as 'completed' | 'construction' | 'planning' | 'suspended',
     coverImage: '',
   });
 
@@ -485,6 +486,24 @@ export default function CreatePromoteur() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Project description"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="project-status" className="block text-sm font-medium text-gray-700 mb-2">
+                  Ticket / Statut
+                </label>
+                <select
+                  id="project-status"
+                  name="status"
+                  value={(projectData as any).status || 'planning'}
+                  onChange={handleProjectChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="planning">Planifié</option>
+                  <option value="construction">En cours</option>
+                  <option value="completed">Livré</option>
+                  <option value="suspended">Suspendu</option>
+                </select>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
