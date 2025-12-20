@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { apiService } from '../../../api';
 import { ViewsBarChart, DurationLineChart, LocationsDoughnut } from '../components/analytics';
 
-type TopViewed = { propertyId: string; title: string; views: number };
+type TopViewed = { propertyId: string; title: string; views: number; phoneClicks?: number; whatsappClicks?: number };
 type LongestStayed = { propertyId: string; title: string; avgDurationSeconds: number };
 type TopLocation = { wilaya: string; daira: string | null; visits: number };
 
@@ -120,7 +120,7 @@ export default function AdminAnalyticsPage() {
             <div className="hidden sm:block w-px h-6 bg-slate-200" />
             <div className="inline-flex gap-2">
               <button
-                onClick={() => exportCsv(topViewed.map(v => ({ id: v.propertyId, titre: v.title, vues: v.views })), `top-viewed-top${range}.csv`)}
+                onClick={() => exportCsv(topViewed.map(v => ({ id: v.propertyId, titre: v.title, vues: v.views, clics_tel: v.phoneClicks ?? 0, clics_whatsapp: v.whatsappClicks ?? 0 })), `top-viewed-top${range}.csv`)}
                 className="px-3 py-1.5 text-sm rounded-md border border-slate-200 bg-transparent hover:bg-slate-50"
               >Exporter vues</button>
               <button
@@ -188,12 +188,25 @@ export default function AdminAnalyticsPage() {
             <div className="mt-4">
               <ul className="divide-y divide-slate-100">
                 {topViewed.map((r) => (
-                  <li key={r.propertyId} className="py-2 flex items-center justify-between">
+                  <li key={r.propertyId} className="py-2 flex items-center justify-between gap-4">
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-slate-900 truncate">{r.title}</div>
                       <div className="text-xs text-slate-500 truncate">{r.propertyId}</div>
                     </div>
-                    <div className="text-sm font-semibold text-blue-600">{r.views}</div>
+                    <div className="flex items-center gap-4 flex-none">
+                      <div className="text-right">
+                        <div className="text-[11px] text-slate-500">Vues</div>
+                        <div className="text-sm font-semibold text-blue-600">{r.views}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[11px] text-slate-500">Tel</div>
+                        <div className="text-sm font-semibold text-emerald-600">{r.phoneClicks ?? 0}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[11px] text-slate-500">WhatsApp</div>
+                        <div className="text-sm font-semibold text-purple-600">{r.whatsappClicks ?? 0}</div>
+                      </div>
+                    </div>
                   </li>
                 ))}
               </ul>

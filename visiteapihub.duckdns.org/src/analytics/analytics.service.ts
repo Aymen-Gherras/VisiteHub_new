@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { VisitEvent } from './entities/visit-event.entity';
+import { ContactClickEvent, ContactClickType } from './entities/contact-click-event.entity';
 import { Property } from '../properties/entities/property.entity';
 
 @Injectable()
@@ -9,6 +10,8 @@ export class AnalyticsService {
   constructor(
     @InjectRepository(VisitEvent)
     private readonly visitRepo: Repository<VisitEvent>,
+    @InjectRepository(ContactClickEvent)
+    private readonly contactClickRepo: Repository<ContactClickEvent>,
     @InjectRepository(Property)
     private readonly propertyRepo: Repository<Property>,
   ) {}
@@ -50,7 +53,51 @@ export class AnalyticsService {
       .orderBy('views', 'DESC')
       .limit(limit)
       .getRawMany();
-    return rows.map(r => ({ propertyId: r.propertyId, title: r.title, views: Number(r.views) }));
+
+    const base = rows.map(r => ({ propertyId: r.propertyId, title: r.title, views: Number(r.views) }));
+    const propertyIds = base.map(r => r.propertyId).filter(Boolean);
+    if (propertyIds.length === 0) {
+      return base;
+    }
+
+    const clickRows = await this.contactClickRepo
+      .createQueryBuilder('c')
+      .leftJoin('c.property', 'p')
+      .select('p.id', 'propertyId')
+      .addSelect('c.type', 'type')
+      .addSelect('COUNT(c.id)', 'clicks')
+      .where('p.id IN (:...ids)', { ids: propertyIds })
+      .groupBy('p.id')
+      .addGroupBy('c.type')
+      .getRawMany();
+
+    const clicksByProperty = new Map<string, { phoneClicks: number; whatsappClicks: number }>();
+    for (const row of clickRows) {
+      const propertyId = row.propertyId as string;
+      const type = row.type as ContactClickType;
+      const clicks = Number(row.clicks) || 0;
+      const prev = clicksByProperty.get(propertyId) ?? { phoneClicks: 0, whatsappClicks: 0 };
+      if (type === 'PHONE') prev.phoneClicks = clicks;
+      if (type === 'WHATSAPP') prev.whatsappClicks = clicks;
+      clicksByProperty.set(propertyId, prev);
+    }
+
+    return base.map((r) => {
+      const extra = clicksByProperty.get(r.propertyId) ?? { phoneClicks: 0, whatsappClicks: 0 };
+      return { ...r, ...extra };
+    }) as any;
+  }
+
+  async recordContactClick(params: { propertyId: string; type: ContactClickType }): Promise<{ success: true }> {
+    const property = await this.propertyRepo.findOne({ where: { id: params.propertyId } });
+    if (!property) throw new NotFoundException('Property not found');
+
+    const event = this.contactClickRepo.create({
+      property,
+      type: params.type,
+    });
+    await this.contactClickRepo.save(event);
+    return { success: true };
   }
 
   async longestStayedProperties(limit = 10): Promise<Array<{ propertyId: string; title: string; avgDurationSeconds: number }>> {

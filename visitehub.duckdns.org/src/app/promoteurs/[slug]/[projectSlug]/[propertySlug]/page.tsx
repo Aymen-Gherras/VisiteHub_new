@@ -183,6 +183,7 @@ export default function PropertyPage({ params }: PropertyPageProps) {
         </div>
         <div className="mb-8">
           <PropertyContactDetails
+            propertyId={property.id}
             phoneNumber={property.phoneNumber || promoteur.phoneNumber}
             address={property.address || project.address || ''}
             city={project.daira}

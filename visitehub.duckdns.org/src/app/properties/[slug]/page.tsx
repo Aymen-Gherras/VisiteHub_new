@@ -174,6 +174,7 @@ export default function PropertyBySlugPage({ params }: { params: Promise<{ slug:
         </div>
         <div className="mb-8">
           <PropertyContactDetails
+            propertyId={property.id}
             phoneNumber={property.phoneNumber}
             address={property.address}
             city={(property as any).city}

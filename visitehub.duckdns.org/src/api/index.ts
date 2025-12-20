@@ -636,6 +636,13 @@ export class ApiService {
     });
   }
 
+  async recordContactClick(data: { propertyId: string; type: 'PHONE' | 'WHATSAPP' }): Promise<{ success: true }>{
+    return this.makeRequest<{ success: true }>(`/analytics/contact-click`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Admin Dashboard
   async getAdminDashboardSummary(): Promise<{
     totalProperties: number;
@@ -650,7 +657,7 @@ export class ApiService {
     return this.makeRequest(`/api/admin/dashboard/summary?_=${ts}`);
   }
 
-  async getTopViewed(limit = 10): Promise<Array<{ propertyId: string; title: string; views: number }>> {
+  async getTopViewed(limit = 10): Promise<Array<{ propertyId: string; title: string; views: number; phoneClicks?: number; whatsappClicks?: number }>> {
     const ts = Date.now();
     return this.makeRequest(`/analytics/top-viewed?limit=${limit}&_=${ts}`);
   }

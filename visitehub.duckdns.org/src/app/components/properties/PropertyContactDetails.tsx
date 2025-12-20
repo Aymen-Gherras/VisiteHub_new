@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
+import { apiService } from '../../../api';
 
 type PropertyContactDetailsProps = {
+  propertyId: string;
   phoneNumber?: string;
   address: string;
   city?: string;
@@ -12,6 +14,7 @@ type PropertyContactDetailsProps = {
 };
 
 export const PropertyContactDetails: React.FC<PropertyContactDetailsProps> = ({
+  propertyId,
   phoneNumber,
   address,
   city,
@@ -19,6 +22,16 @@ export const PropertyContactDetails: React.FC<PropertyContactDetailsProps> = ({
   propertyOwnerType,
   propertyOwnerName,
 }) => {
+  const recordClick = (type: 'PHONE' | 'WHATSAPP') => {
+    if (!propertyId) return;
+    try {
+      // Best-effort; do not block navigation
+      apiService.recordContactClick({ propertyId, type }).catch(() => undefined);
+    } catch {
+      // ignore
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg p-6 shadow-sm">
       <h2 className="text-xl font-bold text-gray-800 mb-4">
@@ -73,6 +86,7 @@ export const PropertyContactDetails: React.FC<PropertyContactDetailsProps> = ({
               <a
                 href={`tel:${phoneNumber}`}
                 className="text-blue-600 hover:text-blue-800 font-semibold"
+                onClick={() => recordClick('PHONE')}
               >
                 {phoneNumber}
               </a>
@@ -107,6 +121,7 @@ export const PropertyContactDetails: React.FC<PropertyContactDetailsProps> = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-3 bg-[#25D366] hover:bg-[#20BA5A] text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                onClick={() => recordClick('WHATSAPP')}
               >
                 <i className="fab fa-whatsapp text-2xl"></i>
                 <span>WhatsApp</span>

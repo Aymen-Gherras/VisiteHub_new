@@ -11,6 +11,17 @@ export class AnalyticsController {
     return this.analyticsService.recordVisit(body);
   }
 
+  @Post('contact-click')
+  @Header('Cache-Control', 'no-store')
+  @DisableCache()
+  async recordContactClick(@Body() body: { propertyId: string; type: 'PHONE' | 'WHATSAPP' }) {
+    const type = body?.type;
+    if (type !== 'PHONE' && type !== 'WHATSAPP') {
+      return { success: true };
+    }
+    return this.analyticsService.recordContactClick({ propertyId: body.propertyId, type });
+  }
+
   @Get('top-viewed')
   async topViewed(@Query('limit') limit?: string) {
     return this.analyticsService.topViewedProperties(limit ? parseInt(limit, 10) : 10);
