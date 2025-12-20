@@ -69,11 +69,9 @@ export default function AdminAnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="flex justify-center items-center py-24">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600" />
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="flex justify-center items-center py-24">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600" />
         </div>
       </div>
     );
@@ -81,10 +79,8 @@ export default function AdminAnalyticsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="bg-red-50 border border-red-200 rounded-md p-4 text-red-700">{error}</div>
-        </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="bg-red-50 border border-red-200 rounded-md p-4 text-red-700">{error}</div>
       </div>
     );
   }
@@ -102,15 +98,14 @@ export default function AdminAnalyticsPage() {
   
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-slate-900">Analytics Dashboard</h1>
             <p className="text-slate-600 mt-1">Traffic et engagement des propriétés</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1">
+            <div className="inline-flex rounded-lg border border-slate-200 bg-transparent p-1">
               {[5,10,20].map((n) => (
                 <button
                   key={n}
@@ -126,15 +121,15 @@ export default function AdminAnalyticsPage() {
             <div className="inline-flex gap-2">
               <button
                 onClick={() => exportCsv(topViewed.map(v => ({ id: v.propertyId, titre: v.title, vues: v.views })), `top-viewed-top${range}.csv`)}
-                className="px-3 py-1.5 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                className="px-3 py-1.5 text-sm rounded-md border border-slate-200 bg-transparent hover:bg-slate-50"
               >Exporter vues</button>
               <button
                 onClick={() => exportCsv(longestStayed.map(v => ({ id: v.propertyId, titre: v.title, duree_moyenne_s: Math.round(v.avgDurationSeconds) })), `longest-stayed-top${range}.csv`)}
-                className="px-3 py-1.5 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                className="px-3 py-1.5 text-sm rounded-md border border-slate-200 bg-transparent hover:bg-slate-50"
               >Exporter durées</button>
               <button
                 onClick={() => exportCsv(topLocations.map(v => ({ wilaya: v.wilaya, daira: v.daira ?? '', visites: v.visits })), `top-locations-top${range}.csv`)}
-                className="px-3 py-1.5 text-sm rounded-md border border-slate-200 bg-white hover:bg-slate-50"
+                className="px-3 py-1.5 text-sm rounded-md border border-slate-200 bg-transparent hover:bg-slate-50"
               >Exporter localisations</button>
             </div>
           </div>
@@ -142,19 +137,19 @@ export default function AdminAnalyticsPage() {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-transparent p-5">
             <div className="text-sm text-slate-500">Propriétés vues (Top 10)</div>
             <div className="mt-2 text-2xl font-semibold text-slate-900">{totalViews}</div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-transparent p-5">
             <div className="text-sm text-slate-500">Éléments suivis</div>
             <div className="mt-2 text-2xl font-semibold text-slate-900">{topViewed.length + longestStayed.length + topLocations.length}</div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-transparent p-5">
             <div className="text-sm text-slate-500">Entrées (Top locations)</div>
             <div className="mt-2 text-2xl font-semibold text-slate-900">{topLocations.length}</div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-transparent p-5">
             <div className="text-sm text-slate-500">Durée moyenne max</div>
             <div className="mt-2 text-2xl font-semibold text-slate-900">{secondsToHms(maxAvgDuration)}</div>
           </div>
@@ -162,26 +157,26 @@ export default function AdminAnalyticsPage() {
 
         {/* Quick insights */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-            <div className="text-sm text-emerald-700">Meilleure localisation</div>
-            <div className="mt-1 text-lg font-semibold text-emerald-900">{bestWilaya ? `${bestWilaya.label}` : '—'}</div>
-            <div className="text-sm text-emerald-700">{bestWilaya ? `${bestWilaya.visits} visites` : 'Pas de données'}</div>
+          <div className="rounded-xl border border-slate-200 bg-transparent p-4">
+            <div className="text-sm text-slate-600">Meilleure localisation</div>
+            <div className="mt-1 text-lg font-semibold text-slate-900">{bestWilaya ? `${bestWilaya.label}` : '—'}</div>
+            <div className="text-sm text-slate-600">{bestWilaya ? `${bestWilaya.visits} visites` : 'Pas de données'}</div>
           </div>
-          <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
-            <div className="text-sm text-blue-700">Total vues (Top {range})</div>
-            <div className="mt-1 text-lg font-semibold text-blue-900">{totalViews}</div>
-            <div className="text-sm text-blue-700">Somme des vues des éléments affichés</div>
+          <div className="rounded-xl border border-slate-200 bg-transparent p-4">
+            <div className="text-sm text-slate-600">Total vues (Top {range})</div>
+            <div className="mt-1 text-lg font-semibold text-slate-900">{totalViews}</div>
+            <div className="text-sm text-slate-600">Somme des vues des éléments affichés</div>
           </div>
-          <div className="rounded-xl border border-purple-200 bg-purple-50 p-4">
-            <div className="text-sm text-purple-700">Durée moyenne max</div>
-            <div className="mt-1 text-lg font-semibold text-purple-900">{secondsToHms(maxAvgDuration)}</div>
-            <div className="text-sm text-purple-700">Parmi les propriétés affichées</div>
+          <div className="rounded-xl border border-slate-200 bg-transparent p-4">
+            <div className="text-sm text-slate-600">Durée moyenne max</div>
+            <div className="mt-1 text-lg font-semibold text-slate-900">{secondsToHms(maxAvgDuration)}</div>
+            <div className="text-sm text-slate-600">Parmi les propriétés affichées</div>
           </div>
         </div>
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
+          <div className="rounded-xl border border-slate-200 bg-transparent p-6 lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-slate-900">Vues par propriété</h2>
             </div>
@@ -205,7 +200,7 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-transparent p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-slate-900">Top localisations</h2>
             </div>
@@ -224,7 +219,7 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-3">
+          <div className="rounded-xl border border-slate-200 bg-transparent p-6 lg:col-span-3">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-slate-900">Durée moyenne par propriété</h2>
             </div>
@@ -248,7 +243,6 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }
