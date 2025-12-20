@@ -5,8 +5,21 @@ import { use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PropertyCard } from '@/app/components/ui/PropertyCard';
+import { AdvancedFilterBar } from '@/app/components/ui/AdvancedFilterBar';
 import { apiService, Agence, Property } from '@/api';
 import { resolveImageUrl } from '@/lib/resolveImageUrl';
+
+interface FilterState {
+  searchQuery: string;
+  transactionType: 'tous' | 'vendre' | 'location';
+  selectedWilaya: string;
+  selectedDaira?: string;
+  selectedPropertyType: string;
+  selectedPropertyOwnerType: string;
+  selectedPaymentConditions: string[];
+  selectedSpecifications: string[];
+  selectedPapers: string[];
+}
 
 type UiAgence = Agence & {
   properties?: Property[];
@@ -39,24 +52,31 @@ export default function AgencePage({ params }: AgencePageProps) {
   const { slug } = use(params);
   const [agence, setAgence] = useState<UiAgence | null>(null);
   const [loading, setLoading] = useState(true);
+  const [propertiesLoading, setPropertiesLoading] = useState(true);
+  const [propertiesError, setPropertiesError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [filters, setFilters] = useState<FilterState>({
+    searchQuery: '',
+    transactionType: 'tous',
+    selectedWilaya: '',
+    selectedDaira: '',
+    selectedPropertyType: '',
+    selectedPropertyOwnerType: 'Agence immobilière',
+    selectedPaymentConditions: [],
+    selectedSpecifications: [],
+    selectedPapers: []
+  });
 
   useEffect(() => {
     const fetchAgence = async () => {
       try {
         setLoading(true);
         const agency = await apiService.getAgenceBySlug(slug);
-        const { properties, total } = await apiService.getProperties({
-          propertyOwnerType: 'Agence immobilière',
-          propertyOwnerName: agency.name,
-          limit: 100,
-          offset: 0,
-        });
-
         setAgence({
           ...agency,
-          properties,
-          propertiesCount: total,
+          properties: [],
+          propertiesCount: 0,
           initials: computeInitials(agency.name),
           bgColor: pickBgColor(agency.slug || agency.name),
           phone: agency.phoneNumber,
@@ -70,6 +90,72 @@ export default function AgencePage({ params }: AgencePageProps) {
     };
     fetchAgence();
   }, [slug]);
+
+  useEffect(() => {
+    if (!agence) return;
+
+    const agenceName = agence.name;
+
+    setPropertiesError(null);
+    setPropertiesLoading(true);
+
+    let cancelled = false;
+    const timeoutId = setTimeout(async () => {
+      try {
+        const params: any = {
+          propertyOwnerType: 'Agence immobilière',
+          propertyOwnerName: agenceName,
+          limit: 100,
+          offset: 0,
+        };
+
+        if (filters.transactionType !== 'tous') params.transactionType = filters.transactionType;
+        if (filters.selectedPropertyType) params.type = filters.selectedPropertyType;
+        if (filters.selectedWilaya) params.wilaya = filters.selectedWilaya;
+        if (filters.selectedDaira) params.daira = filters.selectedDaira;
+
+        const { properties, total } = await apiService.getProperties(params);
+
+        let filtered = properties;
+        if (filters.searchQuery) {
+          const searchTerm = filters.searchQuery.toLowerCase();
+          filtered = properties.filter((property) =>
+            property.title?.toLowerCase().includes(searchTerm) ||
+            property.description?.toLowerCase().includes(searchTerm) ||
+            property.wilaya?.toLowerCase().includes(searchTerm) ||
+            property.daira?.toLowerCase().includes(searchTerm)
+          );
+        }
+
+        if (cancelled) return;
+        setAgence((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            properties: filtered,
+            propertiesCount: filters.searchQuery ? filtered.length : total,
+          };
+        });
+      } catch (err) {
+        console.error('Error fetching agence properties:', err);
+        if (!cancelled) setPropertiesError('Impossible de charger les propriétés de cette agence');
+      } finally {
+        if (!cancelled) setPropertiesLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [
+    agence?.name,
+    filters.transactionType,
+    filters.selectedPropertyType,
+    filters.selectedWilaya,
+    filters.selectedDaira,
+    filters.searchQuery,
+  ]);
 
   if (loading) {
     return (
@@ -214,7 +300,26 @@ export default function AgencePage({ params }: AgencePageProps) {
           </p>
         </div>
 
-        {agence.properties && agence.properties.length > 0 ? (
+        <AdvancedFilterBar
+          filters={filters}
+          onFiltersChange={setFilters}
+          className="mb-8"
+          showOwnerTypeSelect={false}
+        />
+
+        {propertiesLoading && (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-teal-600"></div>
+          </div>
+        )}
+
+        {propertiesError && !propertiesLoading && (
+          <div className="text-center py-12 bg-white rounded-xl">
+            <p className="text-red-600">{propertiesError}</p>
+          </div>
+        )}
+
+        {!propertiesLoading && !propertiesError && agence.properties && agence.properties.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {agence.properties.map((property) => (
               <PropertyCard 
@@ -225,9 +330,11 @@ export default function AgencePage({ params }: AgencePageProps) {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 bg-white rounded-xl">
-            <p className="text-gray-600">Aucune propriété disponible pour le moment.</p>
-          </div>
+          !propertiesLoading && !propertiesError && (
+            <div className="text-center py-12 bg-white rounded-xl">
+              <p className="text-gray-600">Aucune propriété disponible pour le moment.</p>
+            </div>
+          )
         )}
       </div>
 

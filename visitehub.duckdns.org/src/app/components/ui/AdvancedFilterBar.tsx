@@ -36,12 +36,14 @@ interface AdvancedFilterBarProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
   className?: string;
+  showOwnerTypeSelect?: boolean;
 }
 
 export const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
   filters,
   onFiltersChange,
-  className = ''
+  className = '',
+  showOwnerTypeSelect = true
 }) => {
   const [showPanel, setShowPanel] = useState(false);
   const [wilayas, setWilayas] = useState<string[]>(initialWilayas);
@@ -235,18 +237,20 @@ export const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Property Owner Type - FIRST */}
-            <div>
-              <label className="sr-only">Propriétaire</label>
-              <select
-                value={filters.selectedPropertyOwnerType}
-                onChange={(e) => updateFilter('selectedPropertyOwnerType', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-800 focus:border-gray-800"
-              >
-                {ownerTypes.map(ownerType => (
-                  <option key={ownerType.value} value={ownerType.value}>{ownerType.label}</option>
-                ))}
-              </select>
-            </div>
+            {showOwnerTypeSelect && (
+              <div>
+                <label className="sr-only">Propriétaire</label>
+                <select
+                  value={filters.selectedPropertyOwnerType}
+                  onChange={(e) => updateFilter('selectedPropertyOwnerType', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-800 focus:border-gray-800"
+                >
+                  {ownerTypes.map(ownerType => (
+                    <option key={ownerType.value} value={ownerType.value}>{ownerType.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Wilaya - searchable popover */}
             <div className="relative">
