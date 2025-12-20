@@ -1,6 +1,12 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+
+'use client';
+
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Property } from '../../../api';
 import { formatPrice } from '../../../utils/formatPrice';
 import { getTimeAgo, getRentPeriodLabel, isRecentlyAdded } from '../../../utils/dateUtils';
@@ -22,6 +28,8 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
   showVirtualTour = true,
   href
 }) => {
+  const router = useRouter();
+
   const handleCallClick = () => {
     window.location.href = 'tel:+213556267621';
   };
@@ -82,8 +90,24 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
   const primaryImage = resolveImageUrl(imagesList.length > 0 ? imagesList[0] : undefined);
   const unoptimized = Boolean(primaryImage && primaryImage.startsWith('/uploads/'));
 
+  const navigateToDetails = () => {
+    router.push(propertyPath);
+  };
+
   return (
-    <div className={`bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 group ${className}`}>
+    <div
+      className={`bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 group cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${className}`}
+      role="link"
+      tabIndex={0}
+      onClick={navigateToDetails}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          navigateToDetails();
+        }
+      }}
+      aria-label={`Voir les détails: ${property.title}`}
+    >
       {/* Property Image */}
       <div className="relative overflow-hidden h-64">
         <Image
@@ -113,6 +137,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
         {property.iframe360Link && showVirtualTour && (
           <Link
             href={propertyPath}
+            onClick={(e) => e.stopPropagation()}
             className="absolute bottom-4 right-4 bg-emerald-500 text-white px-3 py-2 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
           >
             Visite 360°
@@ -125,6 +150,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
         <div className="flex items-center justify-between mb-2">
           <Link
             href={propertyPath}
+            onClick={(e) => e.stopPropagation()}
             className="text-xl font-bold text-slate-800 group-hover:text-emerald-600 transition-colors line-clamp-1"
           >
             {property.title}
@@ -168,17 +194,15 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
           </div>
         )}
 
-        <div className="flex gap-2">
-          <Link
-            href={propertyPath}
-            className="flex-1 bg-emerald-500 text-white py-2 px-4 rounded-lg hover:bg-emerald-600 transition-colors text-center text-sm font-medium"
-          >
-            Voir détails
-          </Link>
+        <div className="flex justify-end">
           <button
-            onClick={handleCallClick}
-            className="flex items-center justify-center bg-slate-700 text-white py-2 px-4 rounded-lg hover:bg-slate-700
-            . transition-colors"
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCallClick();
+            }}
+            className="flex items-center justify-center bg-slate-700 text-white py-2 px-4 rounded-lg hover:bg-slate-700 transition-colors"
+            aria-label="Appeler"
           >
             <i className="fas fa-phone"></i>
           </button>
