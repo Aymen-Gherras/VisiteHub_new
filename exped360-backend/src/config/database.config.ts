@@ -26,7 +26,7 @@ export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOp
       password: dbPassword, // ✅ No default - must be in env
       database: configService.get<string>('DB_DATABASE', 'exped360-db'),
       entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-      synchronize: nodeEnv !== 'production', // ✅ Enable in development for auto table creation
+      synchronize: false, // ✅ DISABLED: Use migrations instead to prevent schema conflicts
       logging: nodeEnv !== 'production',
       timezone: 'Z',
       charset: 'utf8mb4',
