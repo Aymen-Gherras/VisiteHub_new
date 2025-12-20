@@ -343,8 +343,24 @@ export class ApiService {
   private baseUrl: string;
 
   constructor() {
-    // Use environment variable or fallback to localhost for development
-    this.baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+    // Prefer NEXT_PUBLIC_API_BASE_URL; in production default to same-origin '/api'
+    // (works well behind a reverse proxy). In development, fallback to localhost.
+    const resolvedBaseUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL ??
+      (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000');
+
+    // Store baseUrl as the API *origin* (no trailing /api). buildUrl() will append '/api'.
+    this.baseUrl = (resolvedBaseUrl || '')
+      .replace(/\/$/, '')
+      .replace(/\/api$/, '');
+
+    // Log warning if using http in production (ignore localhost dev-style URLs)
+    if (process.env.NODE_ENV === 'production' && this.baseUrl.startsWith('http://')) {
+      const isLocalHttp = this.baseUrl.includes('localhost') || this.baseUrl.includes('127.0.0.1');
+      if (!isLocalHttp) {
+        console.warn('Warning: API base URL should use HTTPS in production');
+      }
+    }
     
     // Only log in development mode
     if (process.env.NODE_ENV === 'development') {
@@ -352,10 +368,6 @@ export class ApiService {
       console.log('API Service: Constructor - Final baseUrl:', this.baseUrl);
     }
     
-    // Validate base URL in production
-    if (process.env.NODE_ENV === 'production' && !this.baseUrl.startsWith('https://')) {
-      console.warn('Warning: API base URL should use HTTPS in production');
-    }
   }
 
   private buildUrl(endpoint: string): string {
@@ -374,8 +386,18 @@ export class ApiService {
       if (isDev) console.log('API Service: Endpoint is absolute URL, returning:', endpoint);
       return endpoint;
     }
-    const path = endpoint.startsWith('/api') ? endpoint : `/api${endpoint}`;
-    const finalUrl = `${this.baseUrl}${path}`;
+    // Normalize endpoints so we never end up with '/api/api/...'
+    // - Callers may pass '/locations/..' OR '/api/locations/..'
+    // - baseUrl may be '' (same-origin) OR 'https://domain'
+    let path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    if (path === '/api') {
+      path = '';
+    } else if (path.startsWith('/api/')) {
+      path = path.slice(4); // remove leading '/api'
+    }
+
+    const base = this.baseUrl ? this.baseUrl.replace(/\/$/, '') : '';
+    const finalUrl = base ? `${base}/api${path}` : `/api${path}`;
     if (isDev) console.log('API Service: Final URL constructed:', finalUrl);
     return finalUrl;
   }

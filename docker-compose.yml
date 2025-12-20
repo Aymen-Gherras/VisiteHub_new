@@ -4,14 +4,21 @@ services:
     build:
       context: ./visitehub.duckdns.org
       args:
-        NEXT_PUBLIC_API_BASE_URL: http://localhost:4001
-        API_INTERNAL_BASE_URL: http://backend:4000
+        # Browser-facing API URL (used client-side). Set this in your CI/CD or server .env.
+        # - Local default: backend exposed on host port 4001
+        # - Prod recommended: empty string + reverse proxy /api, OR https://api.yourdomain.com
+        # NOTE: Using ${VAR-default} (not ${VAR:-default}) so an intentionally-empty
+        # NEXT_PUBLIC_API_BASE_URL stays empty for Option A (same-origin /api).
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL-http://localhost:4001}
+
+        # Container-internal API URL (used server-side inside the Next.js container)
+        API_INTERNAL_BASE_URL: ${API_INTERNAL_BASE_URL-http://backend:4000}
     container_name: VisiteHub-frontend-new
     ports:
       - "3002:3000"
     environment:
-      - NEXT_PUBLIC_API_BASE_URL=http://localhost:4001
-      - API_INTERNAL_BASE_URL=http://backend:4000
+      - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL-http://localhost:4001}
+      - API_INTERNAL_BASE_URL=${API_INTERNAL_BASE_URL-http://backend:4000}
       - HOSTNAME=0.0.0.0
       - NODE_OPTIONS=--dns-result-order=ipv4first
     depends_on:

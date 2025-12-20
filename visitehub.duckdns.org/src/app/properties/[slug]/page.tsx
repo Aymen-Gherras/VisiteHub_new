@@ -38,7 +38,10 @@ export default function PropertyBySlugPage({ params }: { params: Promise<{ slug:
         }
         setProperty(data);
         if (data && data.id) {
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000'}/api/properties/${data.id}/view`, {
+           const apiBase =
+             process.env.NEXT_PUBLIC_API_BASE_URL ||
+             (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000');
+           fetch(`${apiBase}/api/properties/${data.id}/view`, {
             method: 'PATCH',
           }).catch(() => {});
         }
