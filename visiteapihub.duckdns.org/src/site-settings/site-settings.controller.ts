@@ -46,7 +46,7 @@ export class SiteSettingsController {
   @Roles(UserType.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create carousel image (admin)' })
-  create(@Body() body: { imageUrl: string; altText?: string; linkUrl?: string; isActive?: boolean }) {
+  create(@Body() body: { imageUrl: string; altText?: string; linkUrl?: string; isActive?: boolean; mediaType?: 'image' | 'video' }) {
     return this.service.createImage(body);
   }
 
@@ -82,7 +82,7 @@ export class SiteSettingsController {
   @Roles(UserType.ADMIN)
   @ApiBearerAuth()
   @UseInterceptors(FileInterceptor('image'))
-  @ApiOperation({ summary: 'Upload image to Cloudinary and return URL (admin)' })
+  @ApiOperation({ summary: 'Upload image/video to Cloudinary and return URL + mediaType (admin)' })
   upload(@UploadedFile() file: Express.Multer.File) {
     return this.service.upload(file);
   }

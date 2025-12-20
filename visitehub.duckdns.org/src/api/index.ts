@@ -577,7 +577,7 @@ export class ApiService {
     });
   }
 
-  async createCarouselItem(data: { imageUrl: string; altText?: string; linkUrl?: string; isActive?: boolean }, token: string): Promise<any> {
+  async createCarouselItem(data: { imageUrl: string; altText?: string; linkUrl?: string; isActive?: boolean; mediaType?: 'image' | 'video' }, token: string): Promise<any> {
     return this.makeRequest(`/api/site-settings/homepage-carousel`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}` },
@@ -608,7 +608,7 @@ export class ApiService {
     });
   }
 
-  async uploadCarouselImage(file: File, token: string): Promise<{ imageUrl: string }> {
+  async uploadCarouselImage(file: File, token: string): Promise<{ imageUrl: string; mediaType: 'image' | 'video' }> {
     const formData = new FormData();
     formData.append('image', file);
     const url = this.buildUrl(`/api/site-settings/homepage-carousel/upload`);
@@ -624,7 +624,7 @@ export class ApiService {
     return response.json();
   }
 
-  async getPublicCarousel(): Promise<Array<{ imageUrl: string; altText?: string; linkUrl?: string }>> {
+  async getPublicCarousel(): Promise<Array<{ imageUrl: string; altText?: string; linkUrl?: string; mediaType?: 'image' | 'video' }>> {
     return this.makeRequest(`/api/site-settings/homepage-carousel/public`);
   }
 

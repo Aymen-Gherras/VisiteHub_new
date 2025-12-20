@@ -44,11 +44,11 @@ export class SiteSettingsService {
     return this.imagesRepo.find({ where, order: { order: 'ASC', createdAt: 'DESC' } });
   }
 
-  async listPublic(): Promise<Array<Pick<HomepageCarouselImage, 'imageUrl' | 'altText' | 'linkUrl'>>> {
+  async listPublic(): Promise<Array<Pick<HomepageCarouselImage, 'imageUrl' | 'altText' | 'linkUrl' | 'mediaType'>>> {
     try {
       const settings = await this.getOrCreateSettings();
       const images = await this.imagesRepo.find({ where: { isActive: true }, order: { order: 'ASC', createdAt: 'DESC' }, take: settings.maxSlides });
-      return images.map(({ imageUrl, altText, linkUrl }) => ({ imageUrl, altText, linkUrl }));
+      return images.map(({ imageUrl, altText, linkUrl, mediaType }) => ({ imageUrl, altText, linkUrl, mediaType }));
     } catch (error) {
       console.error('Error in listPublic:', error);
       return [];
@@ -66,6 +66,7 @@ export class SiteSettingsService {
       imageUrl: data.imageUrl!,
       altText: data.altText,
       linkUrl: data.linkUrl,
+      mediaType: data.mediaType === 'video' ? 'video' : 'image',
       isActive: !!data.isActive,
       order: nextOrder,
     });
@@ -98,9 +99,14 @@ export class SiteSettingsService {
     }
   }
 
-  async upload(file: Express.Multer.File): Promise<{ imageUrl: string }> {
-    const imageUrl = await this.cloudinaryService.uploadImage(file);
-    return { imageUrl };
+  async upload(file: Express.Multer.File): Promise<{ imageUrl: string; mediaType: 'image' | 'video' }> {
+    if (!file) {
+      throw new BadRequestException('Missing file');
+    }
+
+    const isVideo = typeof file.mimetype === 'string' && file.mimetype.startsWith('video/');
+    const imageUrl = isVideo ? await this.cloudinaryService.uploadVideo(file) : await this.cloudinaryService.uploadImage(file);
+    return { imageUrl, mediaType: isVideo ? 'video' : 'image' };
   }
 }
 

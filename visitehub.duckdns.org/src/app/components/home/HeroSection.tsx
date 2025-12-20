@@ -38,7 +38,7 @@ export const HeroSection: React.FC = () => {
           setSlides(data.map((d) => ({ 
             image: d.imageUrl, 
             title: d.altText || undefined,
-            mediaType: (d as any).mediaType || 'image'
+            mediaType: d.mediaType || 'image'
           })));
         }
       })

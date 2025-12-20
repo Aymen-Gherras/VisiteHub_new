@@ -9,6 +9,7 @@ interface CarouselItem {
   imageUrl: string;
   altText?: string;
   linkUrl?: string;
+  mediaType?: 'image' | 'video';
   order: number;
   isActive: boolean;
 }
@@ -52,8 +53,8 @@ export default function AdminHomepageSettings() {
       if (!token) return;
       const file = e.target.files?.[0];
       if (!file) return;
-      const { imageUrl } = await apiService.uploadCarouselImage(file, token);
-      const created = await apiService.createCarouselItem({ imageUrl, isActive: activeCount < maxSlides }, token);
+      const { imageUrl, mediaType } = await apiService.uploadCarouselImage(file, token);
+      const created = await apiService.createCarouselItem({ imageUrl, mediaType, isActive: activeCount < maxSlides }, token);
       setItems(prev => [...prev, created]);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Upload failed');
@@ -122,17 +123,28 @@ export default function AdminHomepageSettings() {
 
       <div className="bg-white p-4 rounded-lg shadow border">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Carousel Images</h2>
+          <h2 className="text-lg font-semibold">Carousel Images/Videos</h2>
           <label className="px-4 py-2 bg-emerald-600 text-white rounded cursor-pointer">
-            Upload Image
-            <input type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+            Upload Media
+            <input type="file" accept="image/*,video/*" onChange={handleUpload} className="hidden" />
           </label>
         </div>
 
         <div className="space-y-4">
           {items.sort((a, b) => a.order - b.order).map((item, idx) => (
             <div key={item.id} className="flex items-center gap-4 border rounded-lg p-3">
-              <img src={item.imageUrl} alt={item.altText || ''} className="w-32 h-20 object-cover rounded" />
+              {item.mediaType === 'video' ? (
+                <video
+                  src={item.imageUrl}
+                  muted
+                  playsInline
+                  controls
+                  className="w-32 h-20 object-cover rounded"
+                  style={{ width: 128, height: 80, objectFit: 'cover' }}
+                />
+              ) : (
+                <img src={item.imageUrl} alt={item.altText || ''} className="w-32 h-20 object-cover rounded" />
+              )}
               <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
                 <input className="border rounded px-3 py-1" placeholder="Alt text" value={item.altText || ''} onChange={(e) => updateItem(item.id, { altText: e.target.value })} />
                 <input className="border rounded px-3 py-1" placeholder="Link URL" value={item.linkUrl || ''} onChange={(e) => updateItem(item.id, { linkUrl: e.target.value })} />
