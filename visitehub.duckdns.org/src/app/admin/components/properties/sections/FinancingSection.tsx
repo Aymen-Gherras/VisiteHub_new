@@ -63,7 +63,8 @@ export default function FinancingSection({
       const payload = {
         ...propertyDataForBackend,
         price: typeof priceValue === 'string' ? priceValue : String(priceValue || ''),
-        ...(Array.isArray(images) && { imageUrls: images }),
+        ...(Array.isArray(images) && { images }),
+        ...(propertyData.mainImage ? { mainImage: propertyData.mainImage } : {}),
         ...(propertyData.papers && propertyData.papers.length > 0 && { papers: propertyData.papers }),
       } as any;
       

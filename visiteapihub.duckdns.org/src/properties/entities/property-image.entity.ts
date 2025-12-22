@@ -12,7 +12,7 @@ export class PropertyImage {
   @Column({ nullable: false })
   imageUrl: string;
 
-  @ManyToOne(() => Property, (property) => property.images, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Property, { onDelete: 'CASCADE' })
   property: Property;
 
   @CreateDateColumn()

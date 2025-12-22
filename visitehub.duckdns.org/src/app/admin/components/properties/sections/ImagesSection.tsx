@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { Property } from '../../../../../api';
 import { apiService } from '../../../../../api';
 import { useAuth } from '../../../../../context/AuthContext';
+import ImageDropzone from '../../common/ImageDropzone';
 
 interface ImagesSectionProps {
   propertyData: Partial<Property>;
@@ -166,6 +167,19 @@ export default function ImagesSection({ propertyData, setPropertyData, onNext, o
         <p className="text-gray-600">Upload high-quality photos and add 360° virtual tour if available</p>
       </div>
 
+      <ImageDropzone
+        title="Main Image"
+        description="This is the primary image used as the main cover."
+        value={propertyData.mainImage}
+        onChange={(url) =>
+          setPropertyData({
+            ...propertyData,
+            mainImage: url,
+          })
+        }
+        buttonText="Choose Main Image"
+      />
+
       {/* Upload Area */}
       <div
         className={`
@@ -282,12 +296,6 @@ export default function ImagesSection({ propertyData, setPropertyData, onNext, o
                   <p className="text-white text-xs opacity-75">{formatFileSize(image.size)}</p>
                 </div>
                 
-                {/* Main Image Badge */}
-                {index === 0 && (
-                  <div className="absolute top-2 left-2 bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium">
-                    Main Image
-                  </div>
-                )}
               </div>
             ))}
           </div>
@@ -312,7 +320,7 @@ export default function ImagesSection({ propertyData, setPropertyData, onNext, o
           </li>
           <li className="flex items-start space-x-2">
             <span className="text-blue-600 mt-0.5">•</span>
-            <span>First image will be the main cover photo</span>
+            <span>Use the Main Image section for the cover photo</span>
           </li>
           <li className="flex items-start space-x-2">
             <span className="text-blue-600 mt-0.5">•</span>

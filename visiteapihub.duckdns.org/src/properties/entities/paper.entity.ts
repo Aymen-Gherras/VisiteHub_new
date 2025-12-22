@@ -1,5 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToMany } from 'typeorm';
-import { Property } from './property.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('papers')
 export class Paper {
@@ -8,9 +7,6 @@ export class Paper {
 
   @Column({ unique: true })
   name: string;
-
-  @ManyToMany(() => Property, (property) => property.papers)
-  properties: Property[];
 
   @CreateDateColumn()
   createdAt: Date;

@@ -183,8 +183,8 @@ export default function AdminHomepageSettings() {
           {featured.map((row, idx) => (
             <div key={(row.property as any).id} className="flex items-center gap-4 border rounded-lg p-3">
               <div className="w-16 h-16 bg-gray-100 rounded overflow-hidden">
-                {(row.property.images && row.property.images[0]) ? (
-                  <img src={row.property.images[0]} alt={row.property.title} className="w-full h-full object-cover" />
+                {(row.property.mainImage || (row.property.images && row.property.images[0])) ? (
+                  <img src={row.property.mainImage || row.property.images[0]} alt={row.property.title} className="w-full h-full object-cover" />
                 ) : null}
               </div>
               <div className="flex-1">

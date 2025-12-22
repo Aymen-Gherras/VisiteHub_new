@@ -3,14 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HomepageSettings } from './entities/homepage-settings.entity';
 import { HomepageCarouselImage } from './entities/homepage-carousel-image.entity';
-import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { mkdir, writeFile } from 'fs/promises';
+import { existsSync } from 'fs';
+import { join, extname } from 'path';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class SiteSettingsService {
   constructor(
     @InjectRepository(HomepageSettings) private readonly settingsRepo: Repository<HomepageSettings>,
     @InjectRepository(HomepageCarouselImage) private readonly imagesRepo: Repository<HomepageCarouselImage>,
-    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async getOrCreateSettings(): Promise<HomepageSettings> {
@@ -105,7 +107,22 @@ export class SiteSettingsService {
     }
 
     const isVideo = typeof file.mimetype === 'string' && file.mimetype.startsWith('video/');
-    const imageUrl = isVideo ? await this.cloudinaryService.uploadVideo(file) : await this.cloudinaryService.uploadImage(file);
+
+    const uploadsDir = join(process.cwd(), 'uploads');
+    if (!existsSync(uploadsDir)) {
+      await mkdir(uploadsDir, { recursive: true });
+    }
+
+    const originalExt = extname(file.originalname || '').toLowerCase();
+    const fallbackExt = isVideo ? '.mp4' : '.jpg';
+    const ext = originalExt || fallbackExt;
+    const filename = `${Date.now()}-${randomUUID()}${ext}`;
+    const filePath = join(uploadsDir, filename);
+
+    await writeFile(filePath, file.buffer);
+
+    // Store relative path; served via static /uploads
+    const imageUrl = `/uploads/${filename}`;
     return { imageUrl, mediaType: isVideo ? 'video' : 'image' };
   }
 }

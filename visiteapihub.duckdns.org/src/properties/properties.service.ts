@@ -5,9 +5,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { CacheInvalidationService } from '../common/services/cache-invalidation.service';
 import { Property } from './entities/property.entity';
-import { PropertyImage } from './entities/property-image.entity';
 import { CreatePropertyDto } from './dto/create-property.dto';
-import { PropertyAmenity } from './entities/property-amenity.entity';
 import { Paper } from './entities/paper.entity';
 import { FeaturedProperty } from './entities/featured-property.entity';
 import { HomepageSettings } from '../site-settings/entities/homepage-settings.entity';
@@ -15,9 +13,8 @@ import { UpdatePropertyDto } from './dto/update-property.dto';
 import { PropertyFiltersDto } from './dto/property-filters.dto';
 
 // Type for the transformed property that matches frontend expectations
-type TransformedProperty = Omit<Property, 'images' | 'amenities' | 'papers' | 'nearbyPlaces'> & {
+type TransformedProperty = Omit<Property, 'nearbyPlaces'> & {
   images: string[];
-  amenities: string[];
   papers: string[];
   nearbyPlaces?: Array<{
     id: string;
@@ -35,10 +32,6 @@ export class PropertiesService {
   constructor(
     @InjectRepository(Property)
     private propertiesRepository: Repository<Property>,
-    @InjectRepository(PropertyImage)
-    private propertyImageRepository: Repository<PropertyImage>,
-    @InjectRepository(PropertyAmenity)
-    private propertyAmenitiesRepository: Repository<PropertyAmenity>,
     @InjectRepository(Paper)
     private paperRepository: Repository<Paper>,
     @InjectRepository(FeaturedProperty)
@@ -96,7 +89,25 @@ export class PropertiesService {
   }
 
   async create(createPropertyDto: CreatePropertyDto): Promise<TransformedProperty> {
-    const { imageUrls, papers: paperNames, slug, price, ...propertyData } = createPropertyDto;
+    const {
+      imageUrls,
+      images,
+      mainImage,
+      papers: paperNames,
+      slug,
+      price,
+      ...propertyData
+    } = createPropertyDto;
+
+    const normalizedImages = Array.isArray(images)
+      ? images
+      : Array.isArray(imageUrls)
+        ? imageUrls
+        : [];
+
+    const normalizedPapers = Array.isArray(paperNames)
+      ? paperNames.map((p) => String(p).trim()).filter(Boolean)
+      : [];
 
     // CRITICAL: Extract price and save it separately using raw SQL
     const priceValue = price ? (typeof price === 'string' ? price : String(price)) : undefined;
@@ -104,12 +115,25 @@ export class PropertiesService {
     // Lazy slug generation: if not provided, generate from title
     const finalSlug = slug || (propertyData.title ? await this.generateUniqueSlug(propertyData.title) : undefined);
 
-    // Create the property with the slug (price already extracted via destructuring)
+    // Upsert papers into papers table (kept), while storing the names directly on properties.papers (JSON)
+    if (normalizedPapers.length > 0) {
+      for (const name of normalizedPapers) {
+        const existing = await this.paperRepository.findOne({ where: { name } });
+        if (!existing) {
+          await this.paperRepository.save(this.paperRepository.create({ name }));
+        }
+      }
+    }
+
     const property = this.propertiesRepository.create({
       ...propertyData,
       slug: finalSlug,
       price: priceValue || '', // Temporary value, will be updated via raw SQL
+      mainImage: mainImage || undefined,
+      images: normalizedImages,
+      papers: normalizedPapers,
     });
+
     const savedProperty = await this.propertiesRepository.save(property);
 
     // CRITICAL: Update price using raw SQL to bypass TypeORM transformations
@@ -118,169 +142,15 @@ export class PropertiesService {
       await queryRunner.connect();
 
       try {
-        await queryRunner.query(
-          'UPDATE properties SET price = ? WHERE id = ?',
-          [priceValue, savedProperty.id]
-        );
+        await queryRunner.query('UPDATE properties SET price = ? WHERE id = ?', [priceValue, savedProperty.id]);
         console.log('✅ PropertiesService.create - Price updated via RAW SQL:', priceValue);
       } finally {
         await queryRunner.release();
       }
     }
 
-    // Attach papers if provided
-    if (paperNames && paperNames.length > 0) {
-      const papers: Paper[] = [];
-      for (const name of paperNames) {
-        const trimmed = name.trim();
-        if (!trimmed) continue;
-        let paper = await this.paperRepository.findOne({ where: { name: trimmed } });
-        if (!paper) {
-          paper = this.paperRepository.create({ name: trimmed });
-          paper = await this.paperRepository.save(paper);
-        }
-        papers.push(paper);
-      }
-      savedProperty.papers = papers;
-      await this.propertiesRepository.save(savedProperty);
-    }
-
-    // Create default amenities for the property
-    const defaultAmenities = this.propertyAmenitiesRepository.create({
-      // Education
-      educationMaternal: true,
-      educationPrimere: true,
-      educationCollege: true,
-      // Medical
-      medicalsHopital: true,
-      medicalsPharmacie: true,
-      medicalsClinique: true,
-      // Leisure
-      loisirParc: true,
-      loisirGym: true,
-      loisirBibliotheque: true,
-      loisirMall: true,
-      // Transport
-      transportBus: true,
-      transportTrameway: true,
-      transportMetro: true,
-      // Internal
-      internParking: true,
-      internGarageIndividuel: true,
-      internJardin: true,
-      internPiscine: true,
-      internSafe: true,
-      internCamera: true,
-      internAscenseurs: true,
-      internGym: true,
-    });
-
-    // Associate amenities with the property
-    savedProperty.amenities = defaultAmenities;
-    await this.propertiesRepository.save(savedProperty);
-
-    // Create PropertyImage entities for each image URL
-    if (imageUrls && imageUrls.length > 0) {
-      const propertyImages = imageUrls.map(imageUrl =>
-        this.propertyImageRepository.create({
-          imageUrl,
-          property: savedProperty,
-        })
-      );
-
-      await this.propertyImageRepository.save(propertyImages);
-    }
-
-    // Return the property with images
     const result = await this.findOne(savedProperty.id);
-
-    // Invalidate cache after creating new property
     await this.invalidatePropertyCache(savedProperty.id);
-
-    return result;
-  }
-
-  async createWithImages(createPropertyDto: CreatePropertyDto, imageUrls: string[]): Promise<TransformedProperty> {
-    const { imageUrls: _, papers: paperNames, slug, ...propertyData } = createPropertyDto;
-
-    // Lazy slug generation
-    const finalSlug = slug || (propertyData.title ? await this.generateUniqueSlug(propertyData.title) : undefined);
-
-    // Create the property with the slug
-    const property = this.propertiesRepository.create({
-      ...propertyData,
-      slug: finalSlug,
-    });
-    const savedProperty = await this.propertiesRepository.save(property);
-
-    // Attach papers if provided
-    if (paperNames && paperNames.length > 0) {
-      const papers: Paper[] = [];
-      for (const name of paperNames) {
-        const trimmed = name.trim();
-        if (!trimmed) continue;
-        let paper = await this.paperRepository.findOne({ where: { name: trimmed } });
-        if (!paper) {
-          paper = this.paperRepository.create({ name: trimmed });
-          paper = await this.paperRepository.save(paper);
-        }
-        papers.push(paper);
-      }
-      savedProperty.papers = papers;
-      await this.propertiesRepository.save(savedProperty);
-    }
-
-    // Create default amenities for the property
-    const defaultAmenities = this.propertyAmenitiesRepository.create({
-      // Education
-      educationMaternal: true,
-      educationPrimere: true,
-      educationCollege: true,
-      // Medical
-      medicalsHopital: true,
-      medicalsPharmacie: true,
-      medicalsClinique: true,
-      // Leisure
-      loisirParc: true,
-      loisirGym: true,
-      loisirBibliotheque: true,
-      loisirMall: true,
-      // Transport
-      transportBus: true,
-      transportTrameway: true,
-      transportMetro: true,
-      // Internal
-      internParking: true,
-      internGarageIndividuel: true,
-      internJardin: true,
-      internPiscine: true,
-      internSafe: true,
-      internCamera: true,
-      internAscenseurs: true,
-      internGym: true,
-    });
-
-    // Associate amenities with the property
-    savedProperty.amenities = defaultAmenities;
-    await this.propertiesRepository.save(savedProperty);
-
-    // If there are images, save them to property-images
-    if (imageUrls && imageUrls.length > 0) {
-      for (const imageUrl of imageUrls) {
-        const propertyImage = this.propertyImageRepository.create({
-          property: savedProperty,
-          imageUrl: imageUrl,
-        });
-        await this.propertyImageRepository.save(propertyImage);
-      }
-    }
-
-    // Return the property with images (transformed)
-    const result = await this.findOne(savedProperty.id);
-
-    // Invalidate cache after creating new property
-    await this.invalidatePropertyCache(savedProperty.id);
-
     return result;
   }
 
@@ -297,9 +167,6 @@ export class PropertiesService {
     let properties: Property[];
     try {
       const queryBuilder = this.propertiesRepository.createQueryBuilder('property');
-      queryBuilder.leftJoinAndSelect('property.images', 'images');
-      queryBuilder.leftJoinAndSelect('property.amenities', 'amenities');
-      queryBuilder.leftJoinAndSelect('property.papers', 'papers');
       queryBuilder.leftJoinAndSelect('property.nearbyPlaces', 'nearbyPlaces');
 
       // Add pagination
@@ -326,9 +193,6 @@ export class PropertiesService {
         console.log('⚠️ nearby_places related error detected, retrying query without it');
         try {
           const queryBuilder = this.propertiesRepository.createQueryBuilder('property');
-          queryBuilder.leftJoinAndSelect('property.images', 'images');
-          queryBuilder.leftJoinAndSelect('property.amenities', 'amenities');
-          queryBuilder.leftJoinAndSelect('property.papers', 'papers');
 
           // Add pagination
           queryBuilder.skip(offset).take(limit);
@@ -348,21 +212,7 @@ export class PropertiesService {
     }
 
     // Transform properties efficiently
-    const transformedProperties = properties.map(property => ({
-      ...property,
-      images: property.images ? property.images.map(img => img.imageUrl) : [],
-      amenities: property.amenities ? this.mapAmenitiesToLabels(property.amenities) : [],
-      papers: property.papers ? property.papers.map(p => p.name) : [],
-      nearbyPlaces: property.nearbyPlaces ? property.nearbyPlaces.map(np => ({
-        id: np.id,
-        name: np.name,
-        distance: np.distance,
-        icon: np.icon || '📍',
-        displayOrder: np.displayOrder,
-        createdAt: np.createdAt,
-        updatedAt: np.updatedAt,
-      })).sort((a, b) => a.displayOrder - b.displayOrder) : [],
-    }));
+    const transformedProperties = properties.map((property) => this.transformProperty(property));
 
     const result = { properties: transformedProperties, total };
 
@@ -407,7 +257,7 @@ export class PropertiesService {
     try {
       property = await this.propertiesRepository.findOne({
         where: { id },
-        relations: ['images', 'amenities', 'papers', 'nearbyPlaces'],
+        relations: ['nearbyPlaces'],
       });
     } catch (error: any) {
       // Log the error for debugging
@@ -420,7 +270,7 @@ export class PropertiesService {
         console.log('⚠️ nearby_places related error detected, retrying query without it');
         property = await this.propertiesRepository.findOne({
           where: { id },
-          relations: ['images', 'amenities', 'papers'],
+          relations: [],
         });
       } else {
         // Re-throw other errors
@@ -430,41 +280,6 @@ export class PropertiesService {
 
     if (!property) {
       throw new NotFoundException(`Property with ID ${id} not found`);
-    }
-
-    // If property doesn't have amenities, create default ones
-    if (!property.amenities) {
-      const defaultAmenities = this.propertyAmenitiesRepository.create({
-        // Education
-        educationMaternal: true,
-        educationPrimere: true,
-        educationCollege: true,
-        // Medical
-        medicalsHopital: true,
-        medicalsPharmacie: true,
-        medicalsClinique: true,
-        // Leisure
-        loisirParc: true,
-        loisirGym: true,
-        loisirBibliotheque: true,
-        loisirMall: true,
-        // Transport
-        transportBus: true,
-        transportTrameway: true,
-        transportMetro: true,
-        // Internal
-        internParking: true,
-        internGarageIndividuel: true,
-        internJardin: true,
-        internPiscine: true,
-        internSafe: true,
-        internCamera: true,
-        internAscenseurs: true,
-        internGym: true,
-      });
-
-      property.amenities = defaultAmenities;
-      await this.propertiesRepository.save(property);
     }
 
     // Transform the property to match frontend expectations
@@ -477,9 +292,8 @@ export class PropertiesService {
     const transformed = {
       ...property,
       price: String(property.price), // Force to string - preserve full value like "1 milliards"
-      images: property.images ? property.images.map(img => img.imageUrl) : [],
-      amenities: property.amenities ? this.mapAmenitiesToLabels(property.amenities) : [],
-      papers: property.papers ? property.papers.map(pp => pp.name) : [],
+      images: Array.isArray(property.images) ? property.images : [],
+      papers: Array.isArray(property.papers) ? property.papers : [],
       nearbyPlaces: property.nearbyPlaces ? property.nearbyPlaces.map(np => ({
         id: np.id,
         name: np.name,
@@ -496,13 +310,13 @@ export class PropertiesService {
   }
 
   async update(id: string, updatePropertyDto: UpdatePropertyDto): Promise<TransformedProperty> {
-    const { imageUrls, viewCount, papers: paperNames, ...propertyData } = updatePropertyDto;
+    const { imageUrls, images, mainImage, viewCount, papers: paperNames, ...propertyData } = updatePropertyDto;
 
     // Log the price value received
     console.log('🔍 PropertiesService.update - Received price:', propertyData.price, 'Type:', typeof propertyData.price);
 
     // Get the raw property first
-    const property = await this.propertiesRepository.findOne({ where: { id }, relations: ['papers'] });
+    const property = await this.propertiesRepository.findOne({ where: { id } });
     if (!property) {
       throw new NotFoundException(`Property with ID ${id} not found`);
     }
@@ -558,43 +372,39 @@ export class PropertiesService {
       property.viewCount = viewCount;
     }
 
+    // Handle images + main image if provided
+    const nextImages = Array.isArray(images)
+      ? images
+      : Array.isArray(imageUrls)
+        ? imageUrls
+        : undefined;
+
+    if (nextImages !== undefined) {
+      property.images = nextImages;
+    }
+
+    if (typeof mainImage === 'string') {
+      property.mainImage = mainImage || undefined;
+    }
+
     // Save the property (price already updated via query builder)
     const updatedProperty = await this.propertiesRepository.save(property);
     console.log('🔍 PropertiesService.update - Property price after save:', updatedProperty.price, 'Type:', typeof updatedProperty.price, 'Length:', updatedProperty.price?.length);
 
     // Update papers if provided
-    if (paperNames) {
-      const papers: Paper[] = [];
-      for (const name of paperNames) {
-        const trimmed = name.trim();
-        if (!trimmed) continue;
-        let paper = await this.paperRepository.findOne({ where: { name: trimmed } });
-        if (!paper) {
-          paper = this.paperRepository.create({ name: trimmed });
-          paper = await this.paperRepository.save(paper);
+    if (Array.isArray(paperNames)) {
+      const normalized = paperNames.map((p) => String(p).trim()).filter(Boolean);
+      if (normalized.length > 0) {
+        for (const name of normalized) {
+          const existing = await this.paperRepository.findOne({ where: { name } });
+          if (!existing) {
+            await this.paperRepository.save(this.paperRepository.create({ name }));
+          }
         }
-        papers.push(paper);
       }
-      updatedProperty.papers = papers;
+
+      updatedProperty.papers = normalized;
       await this.propertiesRepository.save(updatedProperty);
-    }
-
-    // Handle image URLs if provided (even an empty array should clear images)
-    if (Array.isArray(imageUrls)) {
-      // Delete existing images
-      await this.propertyImageRepository.delete({ property: { id } });
-
-      // Create new PropertyImage entities (if any)
-      if (imageUrls.length > 0) {
-        const propertyImages = imageUrls.map(imageUrl =>
-          this.propertyImageRepository.create({
-            imageUrl,
-            property: updatedProperty,
-          })
-        );
-
-        await this.propertyImageRepository.save(propertyImages);
-      }
     }
 
     // Return the updated property with images (transformed)
@@ -634,9 +444,6 @@ export class PropertiesService {
     // Helper function to build query with all filters applied
     const buildQuery = (includeNearbyPlaces: boolean = true) => {
       const queryBuilder = this.propertiesRepository.createQueryBuilder('property');
-      queryBuilder.leftJoinAndSelect('property.images', 'images');
-      queryBuilder.leftJoinAndSelect('property.amenities', 'amenities');
-      queryBuilder.leftJoinAndSelect('property.papers', 'papers');
       if (includeNearbyPlaces) {
         queryBuilder.leftJoinAndSelect('property.nearbyPlaces', 'nearbyPlaces');
       }
@@ -790,12 +597,6 @@ export class PropertiesService {
       console.error('Error code:', error?.code);
       console.error('SQL Message:', error?.sqlMessage);
 
-      // If error is about nearby_places table/column issues, retry without it
-      const errorMessage = String(error?.message || '').toLowerCase();
-      const errorCode = String(error?.code || '').toLowerCase();
-      const sqlMessage = String(error?.sqlMessage || '').toLowerCase();
-      const errorString = JSON.stringify(error).toLowerCase();
-
       // Check for various error indicators related to nearby_places
       if (this.isNearbyPlacesError(error)) {
         console.log('⚠️ nearby_places related error detected, retrying query without it');
@@ -820,22 +621,8 @@ export class PropertiesService {
       }
     }
 
-    // Transform properties efficiently without Promise.all
-    const transformedProperties = properties.map(property => ({
-      ...property,
-      images: property.images ? property.images.map(img => img.imageUrl) : [],
-      amenities: property.amenities ? this.mapAmenitiesToLabels(property.amenities) : [],
-      papers: property.papers ? property.papers.map(p => p.name) : [],
-      nearbyPlaces: property.nearbyPlaces ? property.nearbyPlaces.map(np => ({
-        id: np.id,
-        name: np.name,
-        distance: np.distance,
-        icon: np.icon || '📍',
-        displayOrder: np.displayOrder,
-        createdAt: np.createdAt,
-        updatedAt: np.updatedAt,
-      })).sort((a, b) => a.displayOrder - b.displayOrder) : [],
-    }));
+    // Transform properties
+    const transformedProperties = properties.map((property) => this.transformProperty(property));
 
     const result = { properties: transformedProperties, total };
 
@@ -860,17 +647,17 @@ export class PropertiesService {
     let property: Property | null = null;
     try {
       // Try exact slug
-      property = await this.propertiesRepository.findOne({ where: { slug }, relations: ['images', 'amenities', 'papers', 'nearbyPlaces'] });
+      property = await this.propertiesRepository.findOne({ where: { slug }, relations: ['nearbyPlaces'] });
       // Try normalized slug
       if (!property) {
         const normalized = this.slugify(slug);
         if (normalized && normalized !== slug) {
-          property = await this.propertiesRepository.findOne({ where: { slug: normalized }, relations: ['images', 'amenities', 'papers', 'nearbyPlaces'] });
+          property = await this.propertiesRepository.findOne({ where: { slug: normalized }, relations: ['nearbyPlaces'] });
         }
       }
       // Try as ID fallback
       if (!property) {
-        property = await this.propertiesRepository.findOne({ where: { id: slug }, relations: ['images', 'amenities', 'papers', 'nearbyPlaces'] });
+        property = await this.propertiesRepository.findOne({ where: { id: slug }, relations: ['nearbyPlaces'] });
       }
     } catch (error: any) {
       // Log the error for debugging
@@ -880,17 +667,17 @@ export class PropertiesService {
       if (this.isNearbyPlacesError(error)) {
         console.log('⚠️ nearby_places related error detected, retrying query without it');
         // Try exact slug
-        property = await this.propertiesRepository.findOne({ where: { slug }, relations: ['images', 'amenities', 'papers'] });
+        property = await this.propertiesRepository.findOne({ where: { slug }, relations: [] });
         // Try normalized slug
         if (!property) {
           const normalized = this.slugify(slug);
           if (normalized && normalized !== slug) {
-            property = await this.propertiesRepository.findOne({ where: { slug: normalized }, relations: ['images', 'amenities', 'papers'] });
+            property = await this.propertiesRepository.findOne({ where: { slug: normalized }, relations: [] });
           }
         }
         // Try as ID fallback
         if (!property) {
-          property = await this.propertiesRepository.findOne({ where: { id: slug }, relations: ['images', 'amenities', 'papers'] });
+          property = await this.propertiesRepository.findOne({ where: { id: slug }, relations: [] });
         }
       } else {
         // Re-throw other errors
@@ -898,22 +685,7 @@ export class PropertiesService {
       }
     }
     if (!property) throw new NotFoundException(`Property with slug ${slug} not found`);
-    return {
-      ...property,
-      images: property.images ? property.images.map(img => img.imageUrl) : [],
-      amenities: property.amenities ? this.mapAmenitiesToLabels(property.amenities) : [],
-      // @ts-ignore augment
-      papers: property.papers ? property.papers.map(p => p.name) : [],
-      nearbyPlaces: property.nearbyPlaces ? property.nearbyPlaces.map(np => ({
-        id: np.id,
-        name: np.name,
-        distance: np.distance,
-        icon: np.icon || '📍',
-        displayOrder: np.displayOrder,
-        createdAt: np.createdAt,
-        updatedAt: np.updatedAt,
-      })).sort((a, b) => a.displayOrder - b.displayOrder) : [],
-    } as TransformedProperty;
+    return this.transformProperty(property);
   }
 
   /** Return ordered featured properties capped by settings.maxFeatured */
@@ -925,29 +697,24 @@ export class PropertiesService {
       const limited = links.slice(0, max);
       if (limited.length === 0) return [];
       const ids = limited.map(l => l.propertyId);
-      const props = await this.propertiesRepository.find({
-        where: { id: In(ids) },
-        relations: ['images', 'amenities', 'papers', 'nearbyPlaces']
-      });
+      let props: Property[] = [];
+      try {
+        props = await this.propertiesRepository.find({
+          where: { id: In(ids) },
+          relations: ['nearbyPlaces'],
+        });
+      } catch (error: any) {
+        if (this.isNearbyPlacesError(error)) {
+          console.log('⚠️ nearby_places related error detected in findFeatured, retrying without it');
+          props = await this.propertiesRepository.find({ where: { id: In(ids) } });
+        } else {
+          throw error;
+        }
+      }
       // preserve order
       const map = new Map(props.map(p => [p.id, p]));
       const ordered = ids.map(id => map.get(id)).filter(Boolean) as Property[];
-      return ordered.map((p) => ({
-        ...p,
-        images: p.images ? p.images.map(img => img.imageUrl) : [],
-        amenities: p.amenities ? this.mapAmenitiesToLabels(p.amenities) : [],
-        // @ts-ignore augment
-        papers: p.papers ? p.papers.map(pp => pp.name) : [],
-        nearbyPlaces: p.nearbyPlaces ? p.nearbyPlaces.map(np => ({
-          id: np.id,
-          name: np.name,
-          distance: np.distance,
-          icon: np.icon || '📍',
-          displayOrder: np.displayOrder,
-          createdAt: np.createdAt,
-          updatedAt: np.updatedAt,
-        })).sort((a, b) => a.displayOrder - b.displayOrder) : [],
-      } as TransformedProperty));
+      return ordered.map((p) => this.transformProperty(p));
     } catch (error) {
       console.error('Error in findFeatured:', error);
       return [];
@@ -959,19 +726,12 @@ export class PropertiesService {
     const links = await this.featuredRepository.find({ order: { position: 'ASC', createdAt: 'ASC' } });
     const ids = links.map(l => l.propertyId);
     if (ids.length === 0) return [];
-    const props = await this.propertiesRepository.find({ where: { id: In(ids) }, relations: ['images', 'amenities', 'papers'] });
+    const props = await this.propertiesRepository.find({ where: { id: In(ids) } });
     const map = new Map(props.map(p => [p.id, p]));
     return links.map(l => {
       const p = map.get(l.propertyId);
       if (!p) return null as any;
-      const transformed: TransformedProperty = {
-        ...p,
-        images: p.images ? p.images.map(img => img.imageUrl) : [],
-        amenities: p.amenities ? this.mapAmenitiesToLabels(p.amenities) : [],
-        // @ts-ignore augment
-        papers: p.papers ? p.papers.map(pp => pp.name) : [],
-      } as TransformedProperty;
-      return { property: transformed, position: l.position };
+      return { property: this.transformProperty(p), position: l.position };
     }).filter(Boolean);
   }
 
@@ -1066,7 +826,7 @@ export class PropertiesService {
     // Try with nearbyPlaces first, fall back without it if table doesn't exist
     let property: Property | null;
     try {
-      property = await this.propertiesRepository.findOne({ where: { id }, relations: ['images', 'amenities', 'papers', 'nearbyPlaces'] });
+      property = await this.propertiesRepository.findOne({ where: { id }, relations: ['nearbyPlaces'] });
     } catch (error: any) {
       // Log the error for debugging
       console.error('Error in toggleFeatured query:', error?.message || error);
@@ -1074,7 +834,7 @@ export class PropertiesService {
       // If error is about nearby_places table/column issues, retry without it
       if (this.isNearbyPlacesError(error)) {
         console.log('⚠️ nearby_places related error detected, retrying query without it');
-        property = await this.propertiesRepository.findOne({ where: { id }, relations: ['images', 'amenities', 'papers'] });
+        property = await this.propertiesRepository.findOne({ where: { id }, relations: [] });
       } else {
         // Re-throw other errors
         throw error;
@@ -1104,10 +864,10 @@ export class PropertiesService {
     }
 
     // Reload property after updates
-    const saved = await this.propertiesRepository.findOne({ where: { id }, relations: ['images', 'amenities', 'papers', 'nearbyPlaces'] }).catch(async (error: any) => {
+    const saved = await this.propertiesRepository.findOne({ where: { id }, relations: ['nearbyPlaces'] }).catch(async (error: any) => {
       if (this.isNearbyPlacesError(error)) {
         console.log('⚠️ nearby_places related error detected, retrying query without it');
-        return this.propertiesRepository.findOne({ where: { id }, relations: ['images', 'amenities', 'papers'] });
+        return this.propertiesRepository.findOne({ where: { id }, relations: [] });
       }
       throw error;
     });
@@ -1119,71 +879,7 @@ export class PropertiesService {
     // Invalidate cache after toggling featured status
     await this.invalidatePropertyCache();
 
-    const finalProperty = saved;
-
-    return {
-      ...finalProperty,
-      images: finalProperty.images ? finalProperty.images.map(img => img.imageUrl) : [],
-      amenities: finalProperty.amenities ? this.mapAmenitiesToLabels(finalProperty.amenities) : [],
-      // @ts-ignore augment
-      papers: finalProperty.papers ? finalProperty.papers.map(p => p.name) : [],
-      nearbyPlaces: finalProperty.nearbyPlaces ? finalProperty.nearbyPlaces.map(np => ({
-        id: np.id,
-        name: np.name,
-        distance: np.distance,
-        icon: np.icon || '📍',
-        displayOrder: np.displayOrder,
-        createdAt: np.createdAt,
-        updatedAt: np.updatedAt,
-      })).sort((a, b) => a.displayOrder - b.displayOrder) : [],
-    } as TransformedProperty;
-  }
-
-  private mapAmenitiesToLabels(amenities: PropertyAmenity): string[] {
-    const labelMap: Record<string, string> = {
-      // Education
-      educationMaternal: 'École Maternelle',
-      educationPrimere: 'École Primaire',
-      educationCollege: 'Collège',
-      educationLycee: 'Lycée',
-      educationUniversite: 'Université',
-      educationEspaceDeLoisir: 'Espace de loisir',
-      // Medical
-      medicalsHopital: 'Hôpital',
-      medicalsPharmacie: 'Pharmacie',
-      medicalsClinique: 'Clinique',
-      medicalsLaboratoire: 'Laboratoire',
-      // Leisure
-      loisirParc: 'Parc',
-      loisirGym: 'Salle de sport',
-      loisirBibliotheque: 'Bibliothèque',
-      loisirTheatre: 'Théâtre',
-      loisirTerrains: 'Terrains',
-      loisirMall: 'Centre commercial',
-      // Transport
-      transportBus: 'Bus',
-      transportTrameway: 'Tramway',
-      transportMetro: 'Métro',
-      transportTrain: 'Train',
-      // Internal
-      internParking: 'Parking',
-      internGarageIndividuel: 'Garage individuel',
-      internParkingCollectif: 'Parking collectif',
-      internJardin: 'Jardin',
-      internPiscine: 'Piscine',
-      internLoisir: 'Espace loisir',
-      internSafe: 'Sécurité',
-      internCamera: 'Caméra',
-    };
-
-    const active: string[] = [];
-    for (const key of Object.keys(labelMap)) {
-      // @ts-ignore
-      if ((amenities as any)[key]) {
-        active.push(labelMap[key]);
-      }
-    }
-    return active;
+    return this.transformProperty(saved);
   }
 
   /**

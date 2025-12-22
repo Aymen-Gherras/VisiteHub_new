@@ -22,6 +22,8 @@ export const PropertyContactDetails: React.FC<PropertyContactDetailsProps> = ({
   propertyOwnerType,
   propertyOwnerName,
 }) => {
+  const ownerDisplayName = (propertyOwnerName || '').trim() || propertyOwnerType;
+
   const recordClick = (type: 'PHONE' | 'WHATSAPP') => {
     if (!propertyId) return;
     try {
@@ -49,7 +51,7 @@ export const PropertyContactDetails: React.FC<PropertyContactDetailsProps> = ({
             </div>
             <div>
               <div className="font-medium text-gray-800">Propriétaire</div>
-              <div className="text-gray-600">{propertyOwnerType}</div>
+              <div className="text-gray-600">{ownerDisplayName}</div>
             </div>
           </div>
         )}

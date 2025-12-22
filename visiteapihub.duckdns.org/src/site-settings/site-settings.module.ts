@@ -4,10 +4,9 @@ import { HomepageSettings } from './entities/homepage-settings.entity';
 import { HomepageCarouselImage } from './entities/homepage-carousel-image.entity';
 import { SiteSettingsService } from './site-settings.service';
 import { SiteSettingsController } from './site-settings.controller';
-import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([HomepageSettings, HomepageCarouselImage]), CloudinaryModule],
+  imports: [TypeOrmModule.forFeature([HomepageSettings, HomepageCarouselImage])],
   controllers: [SiteSettingsController],
   providers: [SiteSettingsService],
 })

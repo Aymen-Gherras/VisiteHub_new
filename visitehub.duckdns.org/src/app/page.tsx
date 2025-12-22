@@ -147,7 +147,7 @@ export default function HomePage() {
       position: index + 1,
       name: p.title,
       description: p.description,
-      image: p.images?.[0],
+      image: p.mainImage || (Array.isArray(p.images) ? p.images[0] : undefined),
       url: p.slug ? `https://visitehub.com/properties/${p.slug}` : undefined,
       offers: {
         '@type': 'Offer',

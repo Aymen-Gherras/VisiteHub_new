@@ -7,10 +7,10 @@ export class FavoriteProperty {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => User, (user) => user.favorites)
+  @ManyToOne(() => User)
   user: User;
 
-  @ManyToOne(() => Property, (property) => property.favorites)
+  @ManyToOne(() => Property)
   property: Property;
 
   @CreateDateColumn()

@@ -25,8 +25,9 @@ export interface Property {
   wilaya: string;
   daira: string;
   address: string;
+  mainImage?: string;
   images: string[];
-  amenities: string[];
+  amenities?: string[];
   nearbyPlaces?: NearbyPlace[];
   papers?: string[];
   iframe360Link?: string;
@@ -183,8 +184,9 @@ export interface CreatePropertyDto {
   country?: string;
   latitude?: number;
   longitude?: number;
-  imageUrls?: string[];
-  amenities?: string[];
+  mainImage?: string;
+  images?: string[];
+  imageUrls?: string[]; // deprecated alias
   papers?: string[];
   rentPeriod?: 'month' | 'day';
   propertyOwnerType: string; // 'Particulier', 'Agence immobilière', 'Promotion immobilière'

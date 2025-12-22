@@ -87,7 +87,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
   };
 
   const imagesList = normalizeImagesInput((property as any).images);
-  const primaryImage = resolveImageUrl(imagesList.length > 0 ? imagesList[0] : undefined);
+  const primaryImage = resolveImageUrl(property.mainImage || (imagesList.length > 0 ? imagesList[0] : undefined));
   const unoptimized = Boolean(primaryImage && primaryImage.startsWith('/uploads/'));
 
   const navigateToDetails = () => {

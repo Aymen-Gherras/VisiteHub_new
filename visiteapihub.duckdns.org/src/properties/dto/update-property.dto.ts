@@ -17,7 +17,15 @@ export class UpdatePropertyDto extends PartialType(CreatePropertyDto) {
   propertyOwnerType?: string; // 'Particulier', 'Agence immobilière', 'Promotion immobilière'
 
   // Allow updating property owner name
-  @Transform(({ value }) => value ? escape(value?.trim()) : undefined)
+  @Transform(({ value }) => {
+    if (value === null) return null;
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed === '') return null;
+      return escape(trimmed);
+    }
+    return undefined;
+  })
   @IsOptional()
   @IsString()
   propertyOwnerName?: string; // Name of agency or promotion company (only for 'Agence immobilière' or 'Promotion immobilière')

@@ -113,7 +113,15 @@ export class CreatePropertyDto {
   @IsNotEmpty()
   propertyOwnerType: string; // 'Particulier', 'Agence immobilière', 'Promotion immobilière'
 
-  @Transform(({ value }) => value ? escape(value?.trim()) : undefined)
+  @Transform(({ value }) => {
+    if (value === null) return null;
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed === '') return undefined;
+      return escape(trimmed);
+    }
+    return undefined;
+  })
   @IsString()
   @IsOptional()
   propertyOwnerName?: string; // Name of agency or promotion company (only for 'Agence immobilière' or 'Promotion immobilière')
@@ -155,7 +163,16 @@ export class CreatePropertyDto {
 
   @IsArray()
   @IsOptional()
+  images?: string[]; // array of /uploads/... paths
+
+  // Backward-compatible alias (deprecated)
+  @IsArray()
+  @IsOptional()
   imageUrls?: string[];
+
+  @IsString()
+  @IsOptional()
+  mainImage?: string; // /uploads/... path
 
   @IsArray()
   @IsOptional()

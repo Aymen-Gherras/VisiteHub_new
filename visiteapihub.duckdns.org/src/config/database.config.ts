@@ -25,7 +25,7 @@ export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOp
       username: dbUsername,
       password: dbPassword, // ✅ No default - must be in env
       database: configService.get<string>('DB_DATABASE', 'exped360-db'),
-      entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+      autoLoadEntities: true,
       synchronize: nodeEnv !== 'production', // ✅ Enable in development for auto table creation
       logging: nodeEnv !== 'production',
       timezone: 'Z',
@@ -51,7 +51,7 @@ export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOp
         username: url.username,
         password: url.password,
         database: url.pathname.substring(1),
-        entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+        autoLoadEntities: true,
         synchronize: configService.get<string>('NODE_ENV') !== 'production', // ✅ Enable in development
         logging: configService.get<string>('NODE_ENV') !== 'production',
         // ✅ SECURITY: Proper SSL configuration
@@ -88,7 +88,7 @@ export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOp
       username: dbUsername,
       password: dbPassword, // ✅ No default - must be in env
       database: configService.get<string>('DB_DATABASE', 'exped360'),
-      entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+      autoLoadEntities: true,
       synchronize: configService.get<string>('NODE_ENV') !== 'production', // ✅ Enable in development
       logging: configService.get<string>('NODE_ENV') !== 'production',
       // ✅ Connection pooling for better performance (PostgreSQL uses different options)
@@ -118,7 +118,7 @@ export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOp
     username: dbUsername,
     password: dbPassword, // ✅ No default - must be in env
     database: configService.get<string>('DB_DATABASE', 'exped360'),
-    entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+    autoLoadEntities: true,
     synchronize: nodeEnv !== 'production', // ✅ Enable in development for auto table creation
     logging: nodeEnv !== 'production',
     timezone: 'Z',

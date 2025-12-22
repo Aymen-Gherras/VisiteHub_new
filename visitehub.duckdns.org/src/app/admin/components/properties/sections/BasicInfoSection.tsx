@@ -146,7 +146,9 @@ export default function BasicInfoSection({ propertyData, setPropertyData, onNext
       transactionType: selectedTransaction as any,
       rentPeriod: selectedTransaction === 'location' ? selectedRentPeriod as any : undefined,
       propertyOwnerType: selectedOwnerType,
-      propertyOwnerName: (selectedOwnerType === 'Agence immobilière' || selectedOwnerType === 'Promotion immobilière') ? propertyOwnerName.trim() : undefined,
+      propertyOwnerName: (selectedOwnerType === 'Agence immobilière' || selectedOwnerType === 'Promotion immobilière')
+        ? propertyOwnerName.trim()
+        : (propertyOwnerName.trim() ? propertyOwnerName.trim() : (null as any)),
       projectId: selectedOwnerType === 'Promotion immobilière' ? selectedProjectId : undefined,
       title,
       price: price, // Keep as string
@@ -473,6 +475,25 @@ export default function BasicInfoSection({ propertyData, setPropertyData, onNext
           />
         </div>
       </div>
+
+      {/* Particulier Owner Name (Optional) */}
+      {selectedOwnerType === 'Particulier' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Owner Name (Optional)
+          </label>
+          <input
+            type="text"
+            value={propertyOwnerName}
+            onChange={(e) => setPropertyOwnerName(e.target.value)}
+            placeholder="Leave empty to display 'Particulier'"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            If empty, the property details page will display “Particulier”.
+          </p>
+        </div>
+      )}
 
       {/* Next Button */}
       <div className="flex justify-end pt-6">

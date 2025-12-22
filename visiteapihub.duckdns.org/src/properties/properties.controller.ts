@@ -28,24 +28,7 @@ export class PropertiesController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   create(@Body() createPropertyDto: CreatePropertyDto) {
     console.log('🔍 PropertiesController.create - Received price:', createPropertyDto.price, 'Type:', typeof createPropertyDto.price);
-    // If imageUrls are provided, use createWithImages method
-    if (createPropertyDto.imageUrls && createPropertyDto.imageUrls.length > 0) {
-      const { imageUrls, ...propertyData } = createPropertyDto;
-      return this.propertiesService.createWithImages(propertyData, imageUrls);
-    }
     return this.propertiesService.create(createPropertyDto);
-  }
-
-  @Post('with-images')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserType.ADMIN, UserType.AGENT)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create a new property with images' })
-  @ApiResponse({ status: 201, description: 'Property with images successfully created' })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  createWithImages(@Body() createPropertyWithImagesDto: CreatePropertyDto & { imageUrls: string[] }) {
-    const { imageUrls, ...createPropertyDto } = createPropertyWithImagesDto;
-    return this.propertiesService.createWithImages(createPropertyDto, imageUrls);
   }
 
   @Get()

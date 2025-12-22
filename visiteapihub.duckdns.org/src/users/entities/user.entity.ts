@@ -1,6 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { FavoriteProperty } from '../../properties/entities/favorite-property.entity';
 
 export enum UserType {
   ADMIN = 'admin',
@@ -35,9 +34,6 @@ export class User {
     default: UserType.USER,
   })
   type: UserType;
-
-  @OneToMany(() => FavoriteProperty, (favoriteProperty) => favoriteProperty.user)
-  favorites: FavoriteProperty[];
 
   @CreateDateColumn()
   createdAt: Date;

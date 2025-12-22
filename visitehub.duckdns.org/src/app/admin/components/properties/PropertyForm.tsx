@@ -26,8 +26,8 @@ export default function PropertyForm({ property, onSave, onCancel }: PropertyFor
     address: property?.address || '',
     iframe360Link: property?.iframe360Link || '',
     phoneNumber: property?.phoneNumber || '',
-    imageUrls: property?.images || [],
-    amenities: property?.amenities || [],
+    mainImage: property?.mainImage,
+    images: property?.images || [],
     rentPeriod: (property as any)?.rentPeriod || 'month',
     propertyOwnerType: property?.propertyOwnerType || 'Particulier',
     propertyOwnerName: property?.propertyOwnerName || undefined

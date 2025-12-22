@@ -1,8 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, OneToOne, JoinColumn, ManyToMany, JoinTable, Index } from 'typeorm';
-import { PropertyImage } from './property-image.entity';
-import { PropertyAmenity } from './property-amenity.entity';
-import { FavoriteProperty } from './favorite-property.entity';
-import { Paper } from './paper.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, Index } from 'typeorm';
 import { NearbyPlace } from './nearby-place.entity';
 
 export enum PropertyType {
@@ -93,6 +89,15 @@ export class Property {
   @Column({ type: 'text', nullable: true })
   iframe360Link: string;
 
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  mainImage?: string;
+
+  @Column({ type: 'json', nullable: true })
+  images?: string[];
+
+  @Column({ type: 'json', nullable: true })
+  papers?: string[];
+
   @Column({ nullable: true })
   phoneNumber: string;
 
@@ -119,20 +124,6 @@ export class Property {
 
   @Column({ type: 'varchar', length: 36, nullable: true })
   projectId?: string;
-
-  @OneToMany(() => PropertyImage, (image) => image.property, { cascade: true })
-  images: PropertyImage[];
-
-  @OneToOne(() => PropertyAmenity, { cascade: true })
-  @JoinColumn()
-  amenities: PropertyAmenity;
-
-  @OneToMany(() => FavoriteProperty, (favoriteProperty) => favoriteProperty.property)
-  favorites: FavoriteProperty[];
-
-  @ManyToMany(() => Paper, (paper) => paper.properties, { cascade: true })
-  @JoinTable({ name: 'property_papers' })
-  papers: Paper[];
 
   @OneToMany(() => NearbyPlace, (nearbyPlace) => nearbyPlace.property, { cascade: true })
   nearbyPlaces: NearbyPlace[];
