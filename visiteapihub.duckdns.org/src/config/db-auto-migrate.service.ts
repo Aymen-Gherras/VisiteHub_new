@@ -190,7 +190,10 @@ export class DbAutoMigrateService implements OnModuleInit {
         if (!iconCol) {
           this.logger.log('Adding nearby_places.icon column');
           try {
-            await this.dataSource.query(`ALTER TABLE nearby_places ADD COLUMN icon VARCHAR(255) DEFAULT '📍' COMMENT 'Icon emoji or SVG filename (e.g., ''📍'' or ''bus.svg'')'`);
+            // NOTE: nearby_places may be utf8mb3 in older schemas; emoji defaults require utf8mb4.
+            await this.dataSource.query(
+              `ALTER TABLE nearby_places ADD COLUMN icon VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '📍' COMMENT 'Icon emoji or SVG filename (e.g., ''📍'' or ''bus.svg'')'`,
+            );
             
             // Set default icon for existing records
             await this.dataSource.query(`UPDATE nearby_places SET icon = '📍' WHERE icon IS NULL`);

@@ -154,6 +154,8 @@ CREATE TABLE `nearby_places` (
   `name` varchar(255) NOT NULL,
   `distance` varchar(255) NOT NULL,
   `type` varchar(255) NOT NULL,
+  `icon` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '📍' COMMENT 'Icon emoji or SVG filename (e.g., ''📍'' or ''bus.svg'')',
+  `display_order` int DEFAULT '0',
   `createdAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updatedAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   `propertyId` varchar(36) DEFAULT NULL,
