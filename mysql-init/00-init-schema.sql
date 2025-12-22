@@ -145,6 +145,84 @@ CREATE TABLE `homepage_settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+-- agences
+DROP TABLE IF EXISTS `agences`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `agences` (
+  `id` varchar(36) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `description` text,
+  `email` varchar(255) DEFAULT NULL,
+  `phoneNumber` varchar(255) DEFAULT NULL,
+  `address` varchar(255) DEFAULT NULL,
+  `wilaya` varchar(255) DEFAULT NULL,
+  `daira` varchar(255) DEFAULT NULL,
+  `website` varchar(255) DEFAULT NULL,
+  `logo` varchar(255) DEFAULT NULL,
+  `coverImage` varchar(255) DEFAULT NULL,
+  `createdAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updatedAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `IDX_agences_name` (`name`),
+  UNIQUE KEY `IDX_agences_slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+-- promoteurs
+DROP TABLE IF EXISTS `promoteurs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `promoteurs` (
+  `id` varchar(36) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `description` text,
+  `email` varchar(255) DEFAULT NULL,
+  `phoneNumber` varchar(255) DEFAULT NULL,
+  `address` varchar(255) DEFAULT NULL,
+  `wilaya` varchar(255) DEFAULT NULL,
+  `daira` varchar(255) DEFAULT NULL,
+  `website` varchar(255) DEFAULT NULL,
+  `logo` varchar(255) DEFAULT NULL,
+  `coverImage` varchar(255) DEFAULT NULL,
+  `createdAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updatedAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `IDX_promoteurs_name` (`name`),
+  UNIQUE KEY `IDX_promoteurs_slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+-- projects
+DROP TABLE IF EXISTS `projects`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `projects` (
+  `id` varchar(36) NOT NULL,
+  `promoteurId` varchar(36) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `description` text,
+  `wilaya` varchar(255) NOT NULL DEFAULT '',
+  `daira` varchar(255) NOT NULL DEFAULT '',
+  `address` varchar(255) DEFAULT NULL,
+  `status` enum('completed','construction','planning','suspended') NOT NULL DEFAULT 'planning',
+  `coverImage` text,
+  `totalUnits` int DEFAULT NULL,
+  `availableUnits` int DEFAULT NULL,
+  `deliveryDate` varchar(255) DEFAULT NULL,
+  `floorsCount` int DEFAULT NULL,
+  `unitsPerFloor` int DEFAULT NULL,
+  `createdAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updatedAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  KEY `IDX_projects_promoteurId` (`promoteurId`),
+  CONSTRAINT `FK_projects_promoteurId` FOREIGN KEY (`promoteurId`) REFERENCES `promoteurs` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 -- nearby_places
 DROP TABLE IF EXISTS `nearby_places`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -201,6 +279,9 @@ CREATE TABLE `properties` (
   `latitude` float DEFAULT NULL,
   `longitude` float DEFAULT NULL,
   `iframe360Link` text,
+  `mainImage` varchar(500) DEFAULT NULL,
+  `images` json DEFAULT NULL,
+  `papers` json DEFAULT NULL,
   `phoneNumber` varchar(255) DEFAULT NULL,
   `createdAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updatedAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
@@ -212,6 +293,7 @@ CREATE TABLE `properties` (
   `price` varchar(255) NOT NULL,
   `propertyOwnerType` varchar(255) NOT NULL DEFAULT 'Particulier',
   `propertyOwnerName` varchar(255) DEFAULT NULL COMMENT 'Name of agency or promotion company (only for Agence immobilière or Promotion immobilière)',
+  `projectId` varchar(36) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `REL_26ef3c0b3235eda05a1bb0125d` (`amenitiesId`),
   UNIQUE KEY `IDX_089e10e6f1282e7b4bd0c58263` (`slug`),
