@@ -421,6 +421,22 @@ CREATE TABLE `visit_events` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+-- contact_click_events
+DROP TABLE IF EXISTS `contact_click_events`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `contact_click_events` (
+  `id` varchar(36) NOT NULL,
+  `type` enum('PHONE','WHATSAPP') NOT NULL,
+  `createdAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `propertyId` varchar(36) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_contact_click_type` (`type`),
+  KEY `idx_contact_click_property` (`propertyId`),
+  CONSTRAINT `FK_contact_click_property` FOREIGN KEY (`propertyId`) REFERENCES `properties` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;

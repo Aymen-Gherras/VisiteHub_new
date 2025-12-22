@@ -65,21 +65,39 @@ async function bootstrap() {
     }),
   );
 
-  // ✅ SECURITY: CORS setup - only HTTPS in production
+  // ✅ SECURITY: CORS setup
   const isProduction = configService.get<string>('NODE_ENV') === 'production';
+
+  // Allow overriding/adding origins via env for VPS deployments.
+  // Example:
+  //   CORS_ORIGINS=http://213.199.58.144:3002,https://visitehub.com
+  const corsOriginsEnvRaw =
+    configService.get<string>('CORS_ORIGINS') ||
+    configService.get<string>('CORS_ORIGIN') ||
+    '';
+
+  const corsOriginsEnv = corsOriginsEnvRaw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const defaultProdOrigins = [
+    'https://visitehub.com',
+    'https://www.visitehub.com',
+    'https://visiteapihub.duckdns.org', // API domain itself
+  ];
+
+  const defaultDevOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'https://visitehub.com', // Allow production origin in dev for testing
+    'https://www.visitehub.com',
+  ];
+
   const allowedOrigins = isProduction
-    ? [
-        'https://visitehub.com',
-        'https://www.visitehub.com',
-        'https://visiteapihub.duckdns.org', // API domain itself
-      ]
-    : [
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'http://localhost:3002',
-        'https://visitehub.com', // Allow production origin in dev for testing
-        'https://www.visitehub.com',
-      ];
+    ? [...defaultProdOrigins, ...corsOriginsEnv]
+    : [...defaultDevOrigins, ...corsOriginsEnv];
 
   app.enableCors({
     origin: (origin, callback) => {

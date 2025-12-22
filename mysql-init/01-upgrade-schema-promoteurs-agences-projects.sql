@@ -68,6 +68,18 @@ CREATE TABLE IF NOT EXISTS `projects` (
   CONSTRAINT `FK_projects_promoteurId` FOREIGN KEY (`promoteurId`) REFERENCES `promoteurs` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Analytics table used by /api/analytics/contact-click
+CREATE TABLE IF NOT EXISTS `contact_click_events` (
+  `id` varchar(36) NOT NULL,
+  `type` enum('PHONE','WHATSAPP') NOT NULL,
+  `createdAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `propertyId` varchar(36) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_contact_click_type` (`type`),
+  KEY `idx_contact_click_property` (`propertyId`),
+  CONSTRAINT `FK_contact_click_property` FOREIGN KEY (`propertyId`) REFERENCES `properties` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
 -- 2) Add missing properties columns expected by the current backend entity
 SET @db := DATABASE();
 
