@@ -1159,14 +1159,16 @@ export class ApiService {
     if (!id || typeof id !== 'string') {
       throw new Error('Invalid agence ID');
     }
-    return this.makeRequest<Agence>(`/api/agences/${id}`);
+    const ts = Date.now();
+    return this.makeRequest<Agence>(`/api/agences/${id}?_=${ts}`);
   }
 
   async getAgenceBySlug(slug: string): Promise<Agence> {
     if (!slug || typeof slug !== 'string') {
       throw new Error('Invalid agence slug');
     }
-    return this.makeRequest<Agence>(`/api/agences/slug/${encodeURIComponent(slug)}`);
+    const ts = Date.now();
+    return this.makeRequest<Agence>(`/api/agences/slug/${encodeURIComponent(slug)}?_=${ts}`);
   }
 
   async createAgence(data: CreateAgenceDto, token: string): Promise<Agence> {
@@ -1190,13 +1192,31 @@ export class ApiService {
     if (!id || typeof id !== 'string') {
       throw new Error('Invalid agence ID');
     }
+
+    const emailRaw = (data as any).email as unknown;
+    const websiteRaw = (data as any).website as unknown;
+
+    const cleaned: any = {
+      ...data,
+    };
+
+    if (emailRaw !== undefined) {
+      const email = String(emailRaw ?? '').trim();
+      cleaned.email = email ? email : null;
+    }
+
+    if (websiteRaw !== undefined) {
+      const website = String(websiteRaw ?? '').trim();
+      cleaned.website = website ? website : null;
+    }
+
     return this.makeRequest<Agence>(`/api/agences/${id}`, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(cleaned),
     });
   }
 
@@ -1222,14 +1242,16 @@ export class ApiService {
     if (!id || typeof id !== 'string') {
       throw new Error('Invalid promoteur ID');
     }
-    return this.makeRequest<Promoteur>(`/api/promoteurs/${id}`);
+    const ts = Date.now();
+    return this.makeRequest<Promoteur>(`/api/promoteurs/${id}?_=${ts}`);
   }
 
   async getPromoteurBySlug(slug: string): Promise<Promoteur> {
     if (!slug || typeof slug !== 'string') {
       throw new Error('Invalid promoteur slug');
     }
-    return this.makeRequest<Promoteur>(`/api/promoteurs/slug/${encodeURIComponent(slug)}`);
+    const ts = Date.now();
+    return this.makeRequest<Promoteur>(`/api/promoteurs/slug/${encodeURIComponent(slug)}?_=${ts}`);
   }
 
   async createPromoteur(data: CreatePromoteurDto, token: string): Promise<Promoteur> {
@@ -1253,13 +1275,31 @@ export class ApiService {
     if (!id || typeof id !== 'string') {
       throw new Error('Invalid promoteur ID');
     }
+
+    const emailRaw = (data as any).email as unknown;
+    const websiteRaw = (data as any).website as unknown;
+
+    const cleaned: any = {
+      ...data,
+    };
+
+    if (emailRaw !== undefined) {
+      const email = String(emailRaw ?? '').trim();
+      cleaned.email = email ? email : null;
+    }
+
+    if (websiteRaw !== undefined) {
+      const website = String(websiteRaw ?? '').trim();
+      cleaned.website = website ? website : null;
+    }
+
     return this.makeRequest<Promoteur>(`/api/promoteurs/${id}`, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(cleaned),
     });
   }
 

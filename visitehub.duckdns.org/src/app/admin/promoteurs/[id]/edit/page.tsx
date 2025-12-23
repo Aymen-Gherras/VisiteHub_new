@@ -339,7 +339,12 @@ export default function EditPromoteur() {
     setError(null);
 
     try {
-      await apiService.updatePromoteur(promoteurId, formData, token);
+      const payload = {
+        ...formData,
+        email: formData.email.trim() ? formData.email.trim() : null,
+        website: formData.website.trim() ? formData.website.trim() : null,
+      };
+      await apiService.updatePromoteur(promoteurId, payload as any, token);
       router.push('/admin/promoteurs');
     } catch (err) {
       console.error('Error updating promoteur:', err);
@@ -437,7 +442,7 @@ export default function EditPromoteur() {
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email <span className="text-red-500">*</span>
+                Email
               </label>
               <input
                 type="email"
@@ -445,7 +450,6 @@ export default function EditPromoteur() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="contact@promoteur.com"
               />
