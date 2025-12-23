@@ -94,7 +94,12 @@ export default function CreateAgence() {
     setLoading(true);
     setError(null);
     try {
-      await apiService.createAgence(formData, token);
+      const payload = {
+        ...formData,
+        email: formData.email.trim() ? formData.email.trim() : undefined,
+        website: formData.website.trim() ? formData.website.trim() : undefined,
+      };
+      await apiService.createAgence(payload as any, token);
       router.push('/admin/agences');
     } catch (err) {
       console.error('Error creating agence:', err);
@@ -181,7 +186,7 @@ export default function CreateAgence() {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email <span className="text-red-500">*</span>
+                Email
               </label>
               <input
                 type="email"
@@ -189,7 +194,6 @@ export default function CreateAgence() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="contact@agence.com"
               />
