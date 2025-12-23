@@ -87,7 +87,7 @@ export const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property }) =>
 
       {nearbyPlaceItems.length > 0 && (
         <div>
-          <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Caractéristiques</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Lieux à proximité</h2>
           <div id="features-list" className="flex flex-wrap gap-2 sm:gap-3">
             {visibleNearbyPlaces.map((item, index) => {
               const isSvg = isSvgIcon(item.icon);
