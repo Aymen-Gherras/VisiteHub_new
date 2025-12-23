@@ -1170,8 +1170,11 @@ export class ApiService {
   }
 
   async createAgence(data: CreateAgenceDto, token: string): Promise<Agence> {
-    if (!data.name || !data.email) {
-      throw new Error('Missing required fields: name, email');
+    const missing: string[] = [];
+    if (!data.name?.trim()) missing.push('name');
+    if (!data.slug?.trim()) missing.push('slug');
+    if (missing.length > 0) {
+      throw new Error(`Missing required fields: ${missing.join(', ')}`);
     }
     return this.makeRequest<Agence>('/api/agences', {
       method: 'POST',
@@ -1230,8 +1233,11 @@ export class ApiService {
   }
 
   async createPromoteur(data: CreatePromoteurDto, token: string): Promise<Promoteur> {
-    if (!data.name || !data.email) {
-      throw new Error('Missing required fields: name, email');
+    const missing: string[] = [];
+    if (!data.name?.trim()) missing.push('name');
+    if (!data.slug?.trim()) missing.push('slug');
+    if (missing.length > 0) {
+      throw new Error(`Missing required fields: ${missing.join(', ')}`);
     }
     return this.makeRequest<Promoteur>('/api/promoteurs', {
       method: 'POST',
