@@ -31,7 +31,8 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
   const router = useRouter();
 
   const handleCallClick = () => {
-    window.location.href = 'tel:+213556267621';
+    const phone = (property.phoneNumber || '+213556267621').trim();
+    window.location.href = `tel:${phone}`;
   };
 
   const getPropertyTypeLabel = (type: string) => {
@@ -89,6 +90,12 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
   const imagesList = normalizeImagesInput((property as any).images);
   const primaryImage = resolveImageUrl(property.mainImage || (imagesList.length > 0 ? imagesList[0] : undefined));
   const unoptimized = Boolean(primaryImage && primaryImage.startsWith('/uploads/'));
+
+  const nearbyPlaces = (property.nearbyPlaces || [])
+    .filter((p) => p && typeof p.name === 'string' && p.name.trim().length > 0)
+    .slice()
+    .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
+    .slice(0, 4);
 
   const navigateToDetails = () => {
     router.push(propertyPath);
@@ -173,6 +180,30 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
           </div>
         </div>
 
+        {/* Nearby places */}
+        {nearbyPlaces.length > 0 && (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-4">
+            {nearbyPlaces.map((place) => (
+              <div key={place.id} className="flex items-center text-sm text-gray-600 min-w-0">
+                {place.icon && isSvgIcon(place.icon) ? (
+                  <Image
+                    src={getSvgIconPath(place.icon)}
+                    alt={place.name}
+                    width={16}
+                    height={16}
+                    className="mr-2"
+                  />
+                ) : (
+                  <span className="mr-2" aria-hidden>
+                    {place.icon || '📍'}
+                  </span>
+                )}
+                <span className="truncate">{place.name}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center justify-between mb-4">
           <div>
             <span className="text-2xl font-bold text-emerald-600">
@@ -194,14 +225,22 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
           </div>
         )}
 
-        <div className="flex justify-end">
+        <div className="flex items-center gap-3">
+          <Link
+            href={propertyPath}
+            onClick={(e) => e.stopPropagation()}
+            className="flex-1 text-center bg-emerald-500 text-white py-2.5 px-4 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
+            aria-label={`Voir détails: ${property.title}`}
+          >
+            Voir détails
+          </Link>
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               handleCallClick();
             }}
-            className="flex items-center justify-center bg-slate-700 text-white py-2 px-4 rounded-lg hover:bg-slate-700 transition-colors"
+            className="flex items-center justify-center bg-slate-700 text-white py-2.5 px-4 rounded-lg hover:bg-slate-700 transition-colors"
             aria-label="Appeler"
           >
             <i className="fas fa-phone"></i>
