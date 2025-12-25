@@ -91,11 +91,16 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
   const primaryImage = resolveImageUrl(property.mainImage || (imagesList.length > 0 ? imagesList[0] : undefined));
   const unoptimized = Boolean(primaryImage && primaryImage.startsWith('/uploads/'));
 
-  const nearbyPlaces = (property.nearbyPlaces || [])
+  const nearbyPlacesAll = (property.nearbyPlaces || [])
     .filter((p) => p && typeof p.name === 'string' && p.name.trim().length > 0)
     .slice()
-    .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
-    .slice(0, 4);
+    .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+
+  const maxNearbyPlacesSlots = 6;
+  const hasMoreNearbyPlaces = nearbyPlacesAll.length > maxNearbyPlacesSlots;
+  const nearbyPlacesPreview = hasMoreNearbyPlaces
+    ? nearbyPlacesAll.slice(0, maxNearbyPlacesSlots - 1)
+    : nearbyPlacesAll.slice(0, maxNearbyPlacesSlots);
 
   const navigateToDetails = () => {
     router.push(propertyPath);
@@ -165,42 +170,55 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 
         </div>
 
-        <div className="flex items-center text-gray-600 mb-3">
-          <i className="fas fa-map-marker-alt mr-1 text-emerald-500"></i>
-          <span className="text-sm">{property.daira}, {property.wilaya}</span>
-        </div>
-
-        <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
-          <div className="flex items-center">
-            <i className="fas fa-ruler-combined mr-1 text-emerald-500"></i>
-            {property.surface}m²
+        <div className="flex items-center gap-3 mb-4 text-sm text-gray-600 min-w-0">
+          <div className="flex items-center min-w-0">
+            <i className="fas fa-map-marker-alt mr-1 text-emerald-500"></i>
+            <span className="truncate">{property.daira}, {property.wilaya}</span>
           </div>
-          <div className="flex items-center">
+
+          <div className="flex-1" />
+
+          <span className="text-gray-400 whitespace-nowrap shrink-0" aria-hidden>
+            •
+          </span>
+
+          <div className="flex items-center justify-end whitespace-nowrap shrink-0">
+            <i className="fas fa-ruler-combined mr-1 text-emerald-500"></i>
+            <span>{property.surface}m²</span>
+            <span className="mx-2 text-gray-400" aria-hidden>
+              •
+            </span>
             <span className="font-medium">{getPropertyTypeLabel(property.type)}</span>
           </div>
         </div>
 
         {/* Nearby places */}
-        {nearbyPlaces.length > 0 && (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-4">
-            {nearbyPlaces.map((place) => (
-              <div key={place.id} className="flex items-center text-sm text-gray-600 min-w-0">
+        {nearbyPlacesPreview.length > 0 && (
+          <div className="grid grid-cols-3 gap-x-[2px] gap-y-2 mb-4">
+            {nearbyPlacesPreview.map((place) => (
+              <div key={place.id} className="flex items-center  text-sm text-gray-600 min-w-0 w-full">
                 {place.icon && isSvgIcon(place.icon) ? (
                   <Image
                     src={getSvgIconPath(place.icon)}
                     alt={place.name}
                     width={16}
                     height={16}
-                    className="mr-2"
+                    className="mr-1"
                   />
                 ) : (
-                  <span className="mr-2" aria-hidden>
+                  <span className="mr-1" aria-hidden>
                     {place.icon || '📍'}
                   </span>
                 )}
-                <span className="truncate">{place.name}</span>
+                <span className="truncate min-w-0">{place.name}</span>
               </div>
             ))}
+
+            {hasMoreNearbyPlaces && (
+              <div className="flex items-center justify-center text-sm text-gray-500 min-w-0 w-full">
+                <span className="truncate min-w-0">....</span>
+              </div>
+            )}
           </div>
         )}
 

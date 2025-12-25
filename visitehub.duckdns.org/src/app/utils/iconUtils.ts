@@ -142,16 +142,6 @@ export function getSvgIconPath(icon: string): string {
   // URL-encode the filename to handle spaces and special characters
   const encodedFilename = encodeURIComponent(cleanIcon);
   
-  // Debug logging in production to help diagnose issues
-  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
-    console.log('[Icon Debug]', {
-      original: icon,
-      cleaned: cleanIcon,
-      encoded: encodedFilename,
-      path: `/icons/nearby-places/${encodedFilename}`
-    });
-  }
-  
   return `/icons/nearby-places/${encodedFilename}`;
 }
 
