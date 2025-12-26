@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useInViewOnce } from '@/app/hooks/useInViewOnce';
 
 interface TeamMemberCardProps {
   member: {
@@ -11,12 +12,28 @@ interface TeamMemberCardProps {
     bgColor: string;
     textColor: string;
   };
+  /** Animation: stagger delay (ms) for scroll-reveal. */
+  revealDelayMs?: number;
 }
 
-const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member }) => {
+const TeamMemberCard: React.FC<TeamMemberCardProps> = ({ member, revealDelayMs = 0 }) => {
+  const { ref, isInView } = useInViewOnce<HTMLDivElement>({ threshold: 0.2 });
+
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
-      <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-4">
+    <div
+      ref={ref}
+      style={{ transitionDelay: `${revealDelayMs}ms` }}
+      className={[
+        // Animation: scroll-reveal (fade + slight upward motion)
+        'bg-white rounded-2xl shadow-sm p-8 text-center',
+        'transition-all duration-300 ease-out motion-reduce:transition-none',
+        isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4',
+        // Hover: subtle lift and shadow highlight
+        'hover:-translate-y-0.5 hover:shadow-md',
+      ].join(' ')}
+    >
+      {/* Avatar: square as requested */}
+      <div className="w-24 h-24 rounded-none overflow-hidden mx-auto mb-4 border border-slate-200">
         <img 
           src={member.image} 
           alt={member.name}

@@ -1,13 +1,31 @@
+'use client';
+
 import React from 'react';
+import { useInViewOnce } from '@/app/hooks/useInViewOnce';
 
 export const AboutMission = () => {
+  const { ref: leftRef, isInView: leftInView } = useInViewOnce<HTMLDivElement>({ threshold: 0.2 });
+  const { ref: rightRef, isInView: rightInView } = useInViewOnce<HTMLDivElement>({ threshold: 0.2 });
+
   return (
     <section className="py-16 sm:py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-start">
-          <div>
+          {/* Animation: scroll-reveal (text block) */}
+          <div
+            ref={leftRef}
+            className={[
+              // Card styling: soft green gradient background
+              'bg-gradient-to-br from-emerald-50 to-lime-50 p-6 sm:p-8 rounded-2xl border border-emerald-100 shadow-sm',
+              // Hover: subtle lift/shadow (kept gentle for readability)
+              'transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md motion-reduce:transition-none',
+              // Animation: scroll-reveal
+              'will-change-transform will-change-opacity',
+              leftInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4',
+            ].join(' ')}
+          >
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-6">
-               Comment tout a commencé
+              Comment tout a <span className="bg-gradient-to-r from-emerald-600 to-lime-600 bg-clip-text text-transparent">commencé</span>
             </h2>
             <div className="space-y-5 text-base sm:text-lg text-gray-700 leading-relaxed">
               <p>
@@ -35,9 +53,18 @@ export const AboutMission = () => {
             </div>
           </div>
           
-          <div className="bg-gradient-to-br from-emerald-50 to-lime-50 p-6 sm:p-8 rounded-2xl border border-emerald-100">
+          {/* Animation: scroll-reveal (vision card) */}
+          <div
+            ref={rightRef}
+            className={[
+              'bg-gradient-to-br from-emerald-50 to-lime-50 p-6 sm:p-8 rounded-2xl border border-emerald-100',
+              'transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md motion-reduce:transition-none',
+              'will-change-transform will-change-opacity',
+              rightInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4',
+            ].join(' ')}
+          >
             <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4">
-               Notre Vision – Voir le monde autrement
+              Notre <span className="bg-gradient-to-r from-emerald-600 to-lime-600 bg-clip-text text-transparent">Vision</span> – Voir le monde autrement
             </h3>
             <p className="text-base sm:text-lg text-gray-700 leading-relaxed mb-4">
               Notre vision est audacieuse : faire de l'Algérie et de l'Afrique du Nord des pionniers de l'expérience immersive.
