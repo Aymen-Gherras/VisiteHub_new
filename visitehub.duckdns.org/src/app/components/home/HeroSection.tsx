@@ -8,20 +8,35 @@ import { apiService } from '../../../api';
 
 export const HeroSection: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  const normalizeCarouselUrl = (url: string) => {
+    if (!url) return url;
+    if (!url.includes('images.pexels.com/')) return url;
+    try {
+      const parsed = new URL(url);
+      const w = parsed.searchParams.get('w');
+      const width = w ? Number(w) : NaN;
+      if (!Number.isFinite(width) || width <= 1024) return url;
+      parsed.searchParams.set('w', '1024');
+      return parsed.toString();
+    } catch {
+      return url;
+    }
+  };
   
   const defaultSlides = [
     {
-      image: "https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg?auto=compress&cs=tinysrgb&w=1280&dpr=1",
+      image: "https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg?auto=compress&cs=tinysrgb&w=1024&dpr=1",
       title: "Villa moderne avec piscine",
       location: "Alger, Hydra"
     },
     {
-      image: "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1280&dpr=1",
+      image: "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1024&dpr=1",
       title: "Appartement lumineux centre-ville",
       location: "Oran, Centre"
     },
     {
-      image: "https://images.pexels.com/photos/1571463/pexels-photo-1571463.jpeg?auto=compress&cs=tinysrgb&w=1280&dpr=1",
+      image: "https://images.pexels.com/photos/1571463/pexels-photo-1571463.jpeg?auto=compress&cs=tinysrgb&w=1024&dpr=1",
       title: "Penthouse avec terrasse",
       location: "Constantine, Plateau"
     }
@@ -36,7 +51,7 @@ export const HeroSection: React.FC = () => {
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setSlides(data.map((d) => ({ 
-            image: d.imageUrl, 
+            image: normalizeCarouselUrl(d.imageUrl),
             title: d.altText || undefined,
             mediaType: d.mediaType || 'image'
           })));
