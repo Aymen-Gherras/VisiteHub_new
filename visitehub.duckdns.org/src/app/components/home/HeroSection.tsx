@@ -81,7 +81,8 @@ export const HeroSection: React.FC = () => {
                 alt={activeSlide.title || 'Slide'}
                 fill
                 priority={currentSlide === 0}
-                sizes="100vw"
+                quality={70}
+                sizes="(max-width: 768px) 100vw, 1920px"
                 style={{ objectFit: 'cover' }}
               />
             )}

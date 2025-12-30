@@ -43,11 +43,37 @@ export default function RootLayout({
         <link rel="preconnect" href="https://maps.googleapis.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://maps.gstatic.com" crossOrigin="anonymous" />
 
-        {/* ✅ Safe Font Awesome load (no onLoad handler) */}
+        {/* ✅ Font Awesome (non-blocking) */}
         <link
-          rel="stylesheet"
+          rel="preload"
+          as="style"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
         />
+        <link
+          id="fa-css"
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+          media="print"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                var l = document.getElementById('fa-css');
+                if (!l) return;
+                function swap() { l.media = 'all'; }
+                l.addEventListener && l.addEventListener('load', swap);
+                if (l.sheet) swap();
+              })();
+            `,
+          }}
+        />
+        <noscript>
+          <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+          />
+        </noscript>
 
         {/* Meta Pixel Code */}
         <script
