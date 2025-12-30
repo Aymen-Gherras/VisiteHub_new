@@ -50,6 +50,8 @@ export const HeroSection: React.FC = () => {
     return () => clearInterval(timer);
   }, [slides.length]);
 
+  const activeSlide = slides[currentSlide];
+
   return (
 <section className="
   relative 
@@ -60,36 +62,32 @@ export const HeroSection: React.FC = () => {
 ">
       {/* Background Slider */}
       <div className="absolute inset-0">
-        {slides.map((slide, index) => (
-          <div
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              index === currentSlide ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
-            {slide.mediaType === 'video' ? (
+        {activeSlide && (
+          <div key={currentSlide} className="absolute inset-0 animate-fadeIn">
+            {activeSlide.mediaType === 'video' ? (
               <video
-                src={slide.image}
+                src={activeSlide.image}
                 autoPlay
                 loop
                 muted
                 playsInline
+                preload="metadata"
                 className="w-full h-full object-cover"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
             ) : (
               <Image
-                src={slide.image}
-                alt={slide.title || 'Slide'}
+                src={activeSlide.image}
+                alt={activeSlide.title || 'Slide'}
                 fill
-                priority={index === 0}
+                priority={currentSlide === 0}
                 sizes="100vw"
                 style={{ objectFit: 'cover' }}
               />
             )}
             <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 to-slate-900/40"></div>
           </div>
-        ))}
+        )}
       </div>
 
       {/* Content */}

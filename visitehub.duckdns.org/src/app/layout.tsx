@@ -49,19 +49,6 @@ export default function RootLayout({
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
         />
 
-        {/* Optional: load deferred via script (non-blocking) */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              const fa = document.createElement('link');
-              fa.rel = 'stylesheet';
-              fa.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css';
-              fa.media = 'all';
-              document.head.appendChild(fa);
-            `,
-          }}
-        />
-
         {/* Meta Pixel Code */}
         <script
           dangerouslySetInnerHTML={{
