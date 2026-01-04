@@ -26,10 +26,10 @@ export function Navbar() {
     <header className={`fixed w-full z-50 transition-all duration-300 ${
       isScrolled ? 'bg-white shadow-lg' : 'bg-white/95 backdrop-blur-md'
     }`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 gap-x-6">
           {/* Logo */}
-          <div className="flex items-center">
+          <div className="flex items-center flex-shrink-0">
             <div className="flex-shrink-0">
               <Link href="/" className="flex items-center">
                 <img
@@ -44,50 +44,56 @@ export function Navbar() {
           </div>
 
           {/* Tablet/iPad Condensed Navigation (md to xl) - Shows 3 key links */}
-          <nav className="hidden md:flex xl:hidden items-center space-x-4 lg:space-x-6">
-            <Link href="/" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 text-sm lg:text-base">
+          <nav className="hidden md:flex xl:hidden flex-1 items-center justify-center gap-x-4 lg:gap-x-6">
+            <Link href="/" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 text-sm lg:text-base whitespace-nowrap">
               Accueil
             </Link>
-            <Link href="/properties" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 text-sm lg:text-base">
+            <Link href="/properties" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 text-sm lg:text-base whitespace-nowrap">
               Propriétés
             </Link>
-            <Link href="/promoteurs" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 text-sm lg:text-base">
+            <Link href="/promoteurs" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 text-sm lg:text-base whitespace-nowrap">
               Promoteurs
             </Link>
-            <Link href="/agences" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 text-sm lg:text-base">
+            <Link href="/agences" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 text-sm lg:text-base whitespace-nowrap">
               Agences
             </Link>
           </nav>
 
           {/* Desktop Full Navigation (xl and above - 1280px+) - Shows all links */}
-          <nav className="hidden xl:block">
-            <div className="flex items-center space-x-8">
-              <Link href="/" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200">
+          <nav className="hidden xl:flex flex-1 items-center justify-center">
+            <div className="flex items-center gap-x-8">
+              <Link href="/" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 whitespace-nowrap">
                 Accueil
               </Link>
-              <Link href="/properties" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200">
+              <Link href="/properties" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 whitespace-nowrap">
                 Propriétés
               </Link>
-              <Link href="/promoteurs" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200">
+              <Link href="/promoteurs" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 whitespace-nowrap">
                 Promoteurs
               </Link>
-              <Link href="/agences" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200">
+              <Link href="/agences" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 whitespace-nowrap">
                 Agences
               </Link>
-              <Link href="/blog" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200">
+              <Link href="/hotels" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 whitespace-nowrap">
+                Hôtels
+              </Link>
+              <Link href="/restaurants" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 whitespace-nowrap">
+                Restaurants
+              </Link>
+              <Link href="/blog" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 whitespace-nowrap">
                 Blog
               </Link>
-              <Link href="/about" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200">
+              <Link href="/about" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 whitespace-nowrap">
                 À propos
               </Link>
-              <Link href="/contact" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200">
+              <Link href="/contact" className="text-slate-700 hover:text-emerald-500 transition-colors duration-200 whitespace-nowrap">
                 Contact
               </Link>
             </div>
           </nav>
 
           {/* Right Side: CTA + Hamburger */}
-          <div className="flex items-center space-x-3 lg:space-x-4">
+          <div className="flex items-center space-x-3 lg:space-x-4 flex-shrink-0">
             {/* Desktop CTA - Only shows on xl screens and above (1280px+) */}
             <div className="hidden xl:flex">
               <Link
@@ -163,6 +169,20 @@ export function Navbar() {
                 Agences
               </Link>
               <Link 
+                href="/hotels" 
+                className="block px-3 py-2 text-slate-700 hover:text-emerald-500 hover:bg-emerald-50 rounded-md transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Hôtels
+              </Link>
+              <Link 
+                href="/restaurants" 
+                className="block px-3 py-2 text-slate-700 hover:text-emerald-500 hover:bg-emerald-50 rounded-md transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Restaurants
+              </Link>
+              <Link 
                 href="/vendre-louer" 
                 className="block px-3 py-2 text-slate-700 hover:text-emerald-500 hover:bg-emerald-50 rounded-md transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -203,6 +223,20 @@ export function Navbar() {
 
             {/* Tablet/iPad (md to xl): Show only links NOT in main nav */}
             <div className="hidden md:block xl:hidden space-y-1">
+              <Link 
+                href="/hotels" 
+                className="block px-3 py-2 text-slate-700 hover:text-emerald-500 hover:bg-emerald-50 rounded-md transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Hôtels
+              </Link>
+              <Link 
+                href="/restaurants" 
+                className="block px-3 py-2 text-slate-700 hover:text-emerald-500 hover:bg-emerald-50 rounded-md transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Restaurants
+              </Link>
               <Link 
                 href="/blog" 
                 className="block px-3 py-2 text-slate-700 hover:text-emerald-500 hover:bg-emerald-50 rounded-md transition-colors"

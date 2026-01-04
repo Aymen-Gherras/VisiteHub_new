@@ -195,6 +195,49 @@ CREATE TABLE `promoteurs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+-- hotels
+DROP TABLE IF EXISTS `hotels`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `hotels` (
+  `id` varchar(36) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `wilaya` varchar(255) DEFAULT NULL,
+  `daira` varchar(255) DEFAULT NULL,
+  `iframeUrl` text,
+  `roomsNumber` int DEFAULT NULL,
+  `starsNumber` int DEFAULT NULL,
+  `coverImage` varchar(255) DEFAULT NULL,
+  `createdAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updatedAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `IDX_hotels_name` (`name`),
+  UNIQUE KEY `IDX_hotels_slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+-- restaurants
+DROP TABLE IF EXISTS `restaurants`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `restaurants` (
+  `id` varchar(36) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `wilaya` varchar(255) DEFAULT NULL,
+  `daira` varchar(255) DEFAULT NULL,
+  `type` varchar(255) DEFAULT NULL,
+  `iframeUrl` text,
+  `coverImage` varchar(255) DEFAULT NULL,
+  `createdAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  `updatedAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `IDX_restaurants_name` (`name`),
+  UNIQUE KEY `IDX_restaurants_slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 -- projects
 DROP TABLE IF EXISTS `projects`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;

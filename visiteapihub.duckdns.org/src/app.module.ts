@@ -25,6 +25,8 @@ import { DbAutoMigrateService } from './config/db-auto-migrate.service';
 import { SiteSettingsModule } from './site-settings/site-settings.module';
 import { AgencesModule } from './agences/agences.module';
 import { PromoteursModule } from './promoteurs/promoteurs.module';
+import { HotelsModule } from './hotels/hotels.module';
+import { RestaurantsModule } from './restaurants/restaurants.module';
 import { ProjectsModule } from './projects/projects.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -107,6 +109,8 @@ import { CommonModule } from './common/common.module';
     SiteSettingsModule,
     AgencesModule,
     PromoteursModule,
+    HotelsModule,
+    RestaurantsModule,
     ProjectsModule,
     DashboardModule,
   ],

@@ -128,6 +128,60 @@ export interface CreatePromoteurDto {
 
 export interface UpdatePromoteurDto extends Partial<CreatePromoteurDto> {}
 
+// Hotel interfaces
+export interface Hotel {
+  id: string;
+  name: string;
+  slug: string;
+  wilaya?: string;
+  daira?: string;
+  iframeUrl?: string;
+  roomsNumber?: number;
+  starsNumber?: number;
+  coverImage?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateHotelDto {
+  name: string;
+  slug: string;
+  wilaya?: string;
+  daira?: string;
+  iframeUrl?: string;
+  roomsNumber?: number;
+  starsNumber?: number;
+  coverImage?: string;
+}
+
+export interface UpdateHotelDto extends Partial<CreateHotelDto> {}
+
+// Restaurant interfaces
+export interface Restaurant {
+  id: string;
+  name: string;
+  slug: string;
+  wilaya?: string;
+  daira?: string;
+  type?: string;
+  iframeUrl?: string;
+  coverImage?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateRestaurantDto {
+  name: string;
+  slug: string;
+  wilaya?: string;
+  daira?: string;
+  type?: string;
+  iframeUrl?: string;
+  coverImage?: string;
+}
+
+export interface UpdateRestaurantDto extends Partial<CreateRestaurantDto> {}
+
 // Projects (inside Promoteur)
 export interface Project {
   id: string;
@@ -1308,6 +1362,136 @@ export class ApiService {
       throw new Error('Invalid promoteur ID');
     }
     return this.makeRequest<void>(`/api/promoteurs/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  // Hotels API
+  async getHotels(): Promise<Hotel[]> {
+    const ts = Date.now();
+    return this.makeRequest<Hotel[]>(`/api/hotels?_=${ts}`);
+  }
+
+  async getHotel(id: string): Promise<Hotel> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid hotel ID');
+    }
+    const ts = Date.now();
+    return this.makeRequest<Hotel>(`/api/hotels/${id}?_=${ts}`);
+  }
+
+  async getHotelBySlug(slug: string): Promise<Hotel> {
+    if (!slug || typeof slug !== 'string') {
+      throw new Error('Invalid hotel slug');
+    }
+    const ts = Date.now();
+    return this.makeRequest<Hotel>(`/api/hotels/slug/${encodeURIComponent(slug)}?_=${ts}`);
+  }
+
+  async createHotel(data: CreateHotelDto, token: string): Promise<Hotel> {
+    const missing: string[] = [];
+    if (!data.name?.trim()) missing.push('name');
+    if (!data.slug?.trim()) missing.push('slug');
+    if (missing.length > 0) {
+      throw new Error(`Missing required fields: ${missing.join(', ')}`);
+    }
+    return this.makeRequest<Hotel>('/api/hotels', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateHotel(id: string, data: UpdateHotelDto, token: string): Promise<Hotel> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid hotel ID');
+    }
+    return this.makeRequest<Hotel>(`/api/hotels/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteHotel(id: string, token: string): Promise<void> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid hotel ID');
+    }
+    return this.makeRequest<void>(`/api/hotels/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  // Restaurants API
+  async getRestaurants(): Promise<Restaurant[]> {
+    const ts = Date.now();
+    return this.makeRequest<Restaurant[]>(`/api/restaurants?_=${ts}`);
+  }
+
+  async getRestaurant(id: string): Promise<Restaurant> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid restaurant ID');
+    }
+    const ts = Date.now();
+    return this.makeRequest<Restaurant>(`/api/restaurants/${id}?_=${ts}`);
+  }
+
+  async getRestaurantBySlug(slug: string): Promise<Restaurant> {
+    if (!slug || typeof slug !== 'string') {
+      throw new Error('Invalid restaurant slug');
+    }
+    const ts = Date.now();
+    return this.makeRequest<Restaurant>(`/api/restaurants/slug/${encodeURIComponent(slug)}?_=${ts}`);
+  }
+
+  async createRestaurant(data: CreateRestaurantDto, token: string): Promise<Restaurant> {
+    const missing: string[] = [];
+    if (!data.name?.trim()) missing.push('name');
+    if (!data.slug?.trim()) missing.push('slug');
+    if (missing.length > 0) {
+      throw new Error(`Missing required fields: ${missing.join(', ')}`);
+    }
+    return this.makeRequest<Restaurant>('/api/restaurants', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateRestaurant(id: string, data: UpdateRestaurantDto, token: string): Promise<Restaurant> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid restaurant ID');
+    }
+    return this.makeRequest<Restaurant>(`/api/restaurants/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteRestaurant(id: string, token: string): Promise<void> {
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid restaurant ID');
+    }
+    return this.makeRequest<void>(`/api/restaurants/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,

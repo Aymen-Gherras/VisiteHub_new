@@ -14,6 +14,8 @@ export class DbAutoMigrateService implements OnModuleInit {
       await this.backfillMissingPropertySlugs();
       await this.ensureSiteSettingsTables();
       await this.ensureFeaturedPropertiesTable();
+      await this.ensureHotelsTable();
+      await this.ensureRestaurantsTable();
       await this.ensureNearbyPlacesTable();
       await this.ensureBlogPostsTableUtf8mb4();
       // Legacy cleanup (previously removed promotions/projects). Disabled by default.
@@ -459,6 +461,126 @@ export class DbAutoMigrateService implements OnModuleInit {
       `);
       await this.dataSource.query('CREATE INDEX idx_featured_properties_position ON featured_properties(position)');
       await this.dataSource.query('CREATE INDEX idx_featured_properties_propertyId ON featured_properties(propertyId)');
+    }
+  }
+
+  private async ensureHotelsTable(): Promise<void> {
+    const hotelsTable = await this.tableExists('hotels');
+    if (!hotelsTable) {
+      this.logger.log('Creating table hotels');
+      await this.dataSource.query(`
+        CREATE TABLE hotels (
+          id VARCHAR(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+          name VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+          slug VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+          wilaya VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+          daira VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+          iframeUrl TEXT COLLATE utf8mb4_unicode_ci NULL,
+          roomsNumber INT DEFAULT NULL,
+          starsNumber INT DEFAULT NULL,
+          coverImage VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+          createdAt DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+          updatedAt DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+          PRIMARY KEY (id),
+          UNIQUE KEY uq_hotels_name (name),
+          UNIQUE KEY uq_hotels_slug (slug)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+      return;
+    }
+
+    // Ensure columns exist (safe, additive-only)
+    if (!(await this.columnExists('hotels', 'wilaya'))) {
+      await this.dataSource.query(`ALTER TABLE hotels ADD COLUMN wilaya VARCHAR(255) NULL`);
+    }
+    if (!(await this.columnExists('hotels', 'daira'))) {
+      await this.dataSource.query(`ALTER TABLE hotels ADD COLUMN daira VARCHAR(255) NULL`);
+    }
+    if (!(await this.columnExists('hotels', 'iframeUrl'))) {
+      await this.dataSource.query(`ALTER TABLE hotels ADD COLUMN iframeUrl TEXT NULL`);
+    }
+    if (!(await this.columnExists('hotels', 'roomsNumber'))) {
+      await this.dataSource.query(`ALTER TABLE hotels ADD COLUMN roomsNumber INT NULL`);
+    }
+    if (!(await this.columnExists('hotels', 'starsNumber'))) {
+      await this.dataSource.query(`ALTER TABLE hotels ADD COLUMN starsNumber INT NULL`);
+    }
+    if (!(await this.columnExists('hotels', 'coverImage'))) {
+      await this.dataSource.query(`ALTER TABLE hotels ADD COLUMN coverImage VARCHAR(255) NULL`);
+    }
+
+    // Ensure unique indexes (ignore if already present under a different name)
+    try {
+      if (!(await this.indexExists('hotels', 'uq_hotels_name'))) {
+        await this.dataSource.query(`CREATE UNIQUE INDEX uq_hotels_name ON hotels(name)`);
+      }
+    } catch {
+      // ignore
+    }
+    try {
+      if (!(await this.indexExists('hotels', 'uq_hotels_slug'))) {
+        await this.dataSource.query(`CREATE UNIQUE INDEX uq_hotels_slug ON hotels(slug)`);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  private async ensureRestaurantsTable(): Promise<void> {
+    const restaurantsTable = await this.tableExists('restaurants');
+    if (!restaurantsTable) {
+      this.logger.log('Creating table restaurants');
+      await this.dataSource.query(`
+        CREATE TABLE restaurants (
+          id VARCHAR(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+          name VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+          slug VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+          wilaya VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+          daira VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+          type VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+          iframeUrl TEXT COLLATE utf8mb4_unicode_ci NULL,
+          coverImage VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+          createdAt DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+          updatedAt DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+          PRIMARY KEY (id),
+          UNIQUE KEY uq_restaurants_name (name),
+          UNIQUE KEY uq_restaurants_slug (slug)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+      return;
+    }
+
+    // Ensure columns exist (safe, additive-only)
+    if (!(await this.columnExists('restaurants', 'wilaya'))) {
+      await this.dataSource.query(`ALTER TABLE restaurants ADD COLUMN wilaya VARCHAR(255) NULL`);
+    }
+    if (!(await this.columnExists('restaurants', 'daira'))) {
+      await this.dataSource.query(`ALTER TABLE restaurants ADD COLUMN daira VARCHAR(255) NULL`);
+    }
+    if (!(await this.columnExists('restaurants', 'type'))) {
+      await this.dataSource.query(`ALTER TABLE restaurants ADD COLUMN type VARCHAR(255) NULL`);
+    }
+    if (!(await this.columnExists('restaurants', 'iframeUrl'))) {
+      await this.dataSource.query(`ALTER TABLE restaurants ADD COLUMN iframeUrl TEXT NULL`);
+    }
+    if (!(await this.columnExists('restaurants', 'coverImage'))) {
+      await this.dataSource.query(`ALTER TABLE restaurants ADD COLUMN coverImage VARCHAR(255) NULL`);
+    }
+
+    // Ensure unique indexes (ignore if already present under a different name)
+    try {
+      if (!(await this.indexExists('restaurants', 'uq_restaurants_name'))) {
+        await this.dataSource.query(`CREATE UNIQUE INDEX uq_restaurants_name ON restaurants(name)`);
+      }
+    } catch {
+      // ignore
+    }
+    try {
+      if (!(await this.indexExists('restaurants', 'uq_restaurants_slug'))) {
+        await this.dataSource.query(`CREATE UNIQUE INDEX uq_restaurants_slug ON restaurants(slug)`);
+      }
+    } catch {
+      // ignore
     }
   }
 

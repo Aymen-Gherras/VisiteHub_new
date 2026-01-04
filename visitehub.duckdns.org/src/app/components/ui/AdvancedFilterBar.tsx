@@ -37,18 +37,25 @@ interface AdvancedFilterBarProps {
   onFiltersChange: (filters: FilterState) => void;
   className?: string;
   showOwnerTypeSelect?: boolean;
+  showTransactionToggle?: boolean;
+  showPropertyTypeSelect?: boolean;
 }
 
 export const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
   filters,
   onFiltersChange,
   className = '',
-  showOwnerTypeSelect = true
+  showOwnerTypeSelect = true,
+  showTransactionToggle = true,
+  showPropertyTypeSelect = true
 }) => {
   const [showPanel, setShowPanel] = useState(false);
   const [wilayas, setWilayas] = useState<string[]>(initialWilayas);
   const [availableDairas, setAvailableDairas] = useState<string[]>([]);
   const [dairasLoading, setDairasLoading] = useState(false);
+
+  const visibleSelectCount = (showOwnerTypeSelect ? 1 : 0) + 2 + (showPropertyTypeSelect ? 1 : 0);
+  const wilayaDairaColSpanClass = visibleSelectCount === 2 ? 'lg:col-span-2' : '';
 
   // Popover & search states
   const [wilayaOpen, setWilayaOpen] = useState(false);
@@ -168,28 +175,30 @@ export const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
       {/* Top row */}
       <div className="flex flex-col lg:flex-row items-stretch gap-3">
         {/* Transaction */}
-        <div className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-xl">
-          <label className="inline-flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              name="tx"
-              checked={filters.transactionType === 'vendre'}
-              onChange={() => updateFilter('transactionType', 'vendre')}
-              className="text-gray-900 focus:ring-gray-800"
-            />
-            <span className="font-medium">Acheter</span>
-          </label>
-          <label className="inline-flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              name="tx"
-              checked={filters.transactionType === 'location'}
-              onChange={() => updateFilter('transactionType', 'location')}
-              className="text-gray-900 focus:ring-gray-800"
-            />
-            <span className="font-medium">Louer</span>
-          </label>
-        </div>
+        {showTransactionToggle && (
+          <div className="flex items-center gap-4 px-4 py-3 bg-gray-50 rounded-xl">
+            <label className="inline-flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="tx"
+                checked={filters.transactionType === 'vendre'}
+                onChange={() => updateFilter('transactionType', 'vendre')}
+                className="text-gray-900 focus:ring-gray-800"
+              />
+              <span className="font-medium">Acheter</span>
+            </label>
+            <label className="inline-flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="tx"
+                checked={filters.transactionType === 'location'}
+                onChange={() => updateFilter('transactionType', 'location')}
+                className="text-gray-900 focus:ring-gray-800"
+              />
+              <span className="font-medium">Louer</span>
+            </label>
+          </div>
+        )}
 
         {/* Keyword search */}
         <div className="flex-1 relative">
@@ -253,7 +262,7 @@ export const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
             )}
 
             {/* Wilaya - searchable popover */}
-            <div className="relative">
+            <div className={`relative ${wilayaDairaColSpanClass}`.trim()}>
               <label className="sr-only">Wilaya</label>
               <button
                 ref={wilayaBtnRef}
@@ -315,7 +324,7 @@ export const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
             </div>
 
             {/* Daira - searchable popover */}
-            <div className="relative">
+            <div className={`relative ${wilayaDairaColSpanClass}`.trim()}>
               <label className="sr-only">Daira</label>
               <button
                 ref={dairaBtnRef}
@@ -382,19 +391,21 @@ export const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
             </div>
 
             {/* Type */}
-            <div>
-              <label className="sr-only">Type</label>
-              <select
-                value={filters.selectedPropertyType}
-                onChange={(e) => updateFilter('selectedPropertyType', e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-800 focus:border-gray-800"
-              >
-                <option value="">Pièces / Type</option>
-                {propertyTypes.map(type => (
-                  <option key={type} value={type}>{propertyTypeLabels[type]}</option>
-                ))}
-              </select>
-            </div>
+            {showPropertyTypeSelect && (
+              <div>
+                <label className="sr-only">Type</label>
+                <select
+                  value={filters.selectedPropertyType}
+                  onChange={(e) => updateFilter('selectedPropertyType', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-800 focus:border-gray-800"
+                >
+                  <option value="">Pièces / Type</option>
+                  {propertyTypes.map(type => (
+                    <option key={type} value={type}>{propertyTypeLabels[type]}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
           </div>
         </div>
