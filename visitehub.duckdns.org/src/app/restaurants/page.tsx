@@ -123,7 +123,7 @@ export default function RestaurantsPage() {
                 <Link
                   key={restaurant.id}
                   href={`/restaurant/${restaurant.slug}`}
-                  className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden"
+                  className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden"
                 >
                   <div className="relative h-48 bg-gradient-to-br from-emerald-600 to-lime-600">
                     {coverUrl ? (
@@ -148,6 +148,15 @@ export default function RestaurantsPage() {
                     {restaurant.type ? (
                       <p className="mt-2 text-sm text-gray-700">{restaurant.type}</p>
                     ) : null}
+
+                    <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end">
+                      <div className="flex items-center gap-2 text-emerald-600 font-medium text-sm group-hover:gap-3 transition-all">
+                        Voir profil
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
                   </div>
                 </Link>
               );

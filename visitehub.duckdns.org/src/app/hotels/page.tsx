@@ -122,7 +122,7 @@ export default function HotelsPage() {
                 <Link
                   key={hotel.id}
                   href={`/hotel/${hotel.slug}`}
-                  className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden"
+                  className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden"
                 >
                   <div className="relative h-48 bg-gradient-to-br from-emerald-600 to-lime-600">
                     {coverUrl ? (
@@ -145,17 +145,40 @@ export default function HotelsPage() {
                         : hotel.wilaya || hotel.daira || ''}
                     </p>
 
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                      {typeof hotel.starsNumber === 'number' ? (
-                        <span className="px-2 py-1 bg-gray-100 rounded-full text-gray-700">
-                          {hotel.starsNumber} ★
-                        </span>
-                      ) : null}
-                      {typeof hotel.roomsNumber === 'number' ? (
-                        <span className="px-2 py-1 bg-gray-100 rounded-full text-gray-700">
-                          {hotel.roomsNumber} chambres
-                        </span>
-                      ) : null}
+                    <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-3 items-center">
+                      <div className="flex items-center justify-start text-sm text-emerald-600 font-medium">
+                        {typeof hotel.roomsNumber === 'number' ? (
+                          <div className="flex items-center">
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M3 13V9a2 2 0 012-2h14a2 2 0 012 2v4M4 13h16M4 13v6m16-6v6M7 19v-2m10 2v-2"
+                              />
+                            </svg>
+                            {hotel.roomsNumber} chambres
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="flex items-center justify-center text-sm text-emerald-600 font-medium">
+                        {typeof hotel.starsNumber === 'number' ? (
+                          <div className="flex items-center">
+                           
+                            {hotel.starsNumber} ★
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="flex items-center justify-end">
+                        <div className="flex items-center gap-2 text-emerald-600 font-medium text-sm group-hover:gap-3 transition-all">
+                          Voir profil
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </Link>
